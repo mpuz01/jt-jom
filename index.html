@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Jastip Jombang">
+    <title>Jastip Jombang — Jastip Segala Barang Dalam Kota (Sistem Midman & Escrow)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Animasi halus untuk perpindahan tab dan notifikasi */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        /* Sembunyikan scrollbar pada slider kategori ala GoFood */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Custom scrollbar desktop */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100/80 text-slate-800 min-h-screen flex flex-col pb-24 md:pb-8">
+
+    <!-- ===================================================================== -->
+    <!-- APP TOP HEADER (GAYA APLIKASI MOBILE GOFOOD / GRAB)                   -->
+    <!-- ===================================================================== -->
+    <header class="sticky top-0 z-40 bg-emerald-600 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 pt-3 pb-3.5 space-y-3">
+            <!-- Baris Atas: Lokasi Pengantaran & Tombol Instal APK -->
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center text-white shrink-0 border border-white/20">
+                        <i class="fa-solid fa-location-dot text-base text-amber-300"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-100">Lokasi Antar • Jombang</span>
+                            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-900/40 text-emerald-200">MIDMAN ESCROW</span>
+                        </div>
+                        <p id="header-active-location" class="font-extrabold text-sm truncate leading-tight">Kel. Kaliwungu (Pusat Kota) <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="openInstallAppModal()" id="btn-install-pwa" class="px-3 py-1.5 rounded-full bg-slate-900/85 hover:bg-slate-900 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-brands fa-android text-emerald-400 text-sm"></i>
+                        <span>Versi APK</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Bar Ala GoFood (Hanya tampil di tab Penitip / Beranda) -->
+            <div id="mobile-search-bar" class="relative">
+                <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3.5 top-3"></i>
+                <input type="text" id="umkm-search-input" oninput="renderUmkmSection()" placeholder="Mau titip jajan atau barang apa di Jombang hari ini?" class="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-white text-slate-800 placeholder-slate-400 text-xs font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+            </div>
+
+            <!-- Role Switcher Tabs (Khusus Layar Tablet/Desktop — Di HP diganti Bottom Nav Bar) -->
+            <div class="hidden md:flex items-center bg-emerald-700/70 p-1 rounded-2xl border border-emerald-500/40 gap-1">
+                <button onclick="switchRole('penitip')" id="tab-penitip" class="role-btn flex-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-emerald-800 shadow">
+                    <i class="fa-solid fa-house"></i> <span>1. Beranda Penitip</span>
+                </button>
+                <button onclick="switchRole('admin')" id="tab-admin" class="role-btn flex-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-emerald-50 hover:bg-emerald-600/50">
+                    <i class="fa-solid fa-shield-halved"></i> <span>2. Admin Midman</span>
+                    <span id="badge-admin-pending" class="hidden bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button onclick="switchRole('kurir')" id="tab-kurir" class="role-btn flex-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-emerald-50 hover:bg-emerald-600/50">
+                    <i class="fa-solid fa-motorcycle"></i> <span>3. Pengirim / Kurir</span>
+                    <span id="badge-kurir-active" class="hidden bg-sky-300 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">0</span>
+                </button>
+                <button onclick="switchRole('umkm')" id="tab-umkm" class="role-btn flex-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-emerald-50 hover:bg-emerald-600/50">
+                    <i class="fa-solid fa-store"></i> <span>4. Mitra Toko UMKM</span>
+                    <span id="badge-umkm-count" class="bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">2</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- ===================================================================== -->
+    <!-- MAIN CONTENT CONTAINER                                                -->
+    <!-- ===================================================================== -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-3.5 sm:px-4 py-4 sm:py-6">
+
+        <!-- =================================================================== -->
+        <!-- VIEW 1: PENITIP (TAMPILAN ALA GOFOOD: KATEGORI, KATALOG & CHECKOUT) -->
+        <!-- =================================================================== -->
+        <section id="view-penitip" class="space-y-5 animate-fade-in">
+            <!-- Promo / Escrow Assurance Carousel Card ala GoFood -->
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-3xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden">
+                <div class="relative z-10 max-w-xl space-y-1.5">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wide">
+                        <i class="fa-solid fa-shield-halved"></i> Jaminan Uang Aman 100%
+                    </div>
+                    <h2 class="text-lg sm:text-2xl font-extrabold tracking-tight leading-snug">Titip Jajan & Belanja Apa Saja di Jombang, Tanpa Takut Penipuan!</h2>
+                    <p class="text-slate-300 text-xs leading-relaxed">
+                        Ongkir hemat mulai <strong class="text-emerald-400">Rp 5.000</strong> (0–4 km). Dana ditahan Midman & baru cair setelah barang tiba dengan foto bukti GPS.
+                    </p>
+                </div>
+                <i class="fa-solid fa-bag-shopping text-emerald-500/15 text-8xl absolute -right-3 -bottom-4 rotate-12 pointer-events-none"></i>
+            </div>
+
+            <!-- Horizontal Category Pills ala GoFood -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                <button type="button" onclick="setUmkmCategoryFilter('ALL')" id="cat-btn-ALL" class="cat-pill shrink-0 px-3.5 py-2 rounded-2xl bg-emerald-600 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-fire text-amber-300"></i> <span>Semua Menu</span>
+                </button>
+                <button type="button" onclick="setUmkmCategoryFilter('Kuliner & Jajan')" id="cat-btn-Kuliner & Jajan" class="cat-pill shrink-0 px-3.5 py-2 rounded-2xl bg-white text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition">
+                    <span>🍜</span> <span>Kuliner & Jajan</span>
+                </button>
+                <button type="button" onclick="setUmkmCategoryFilter('Minuman & Kopi')" id="cat-btn-Minuman & Kopi" class="cat-pill shrink-0 px-3.5 py-2 rounded-2xl bg-white text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition">
+                    <span>🧋</span> <span>Minuman & Kopi</span>
+                </button>
+                <button type="button" onclick="setUmkmCategoryFilter('Sembako & Harian')" id="cat-btn-Sembako & Harian" class="cat-pill shrink-0 px-3.5 py-2 rounded-2xl bg-white text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition">
+                    <span>🛒</span> <span>Sembako & Harian</span>
+                </button>
+                <button type="button" onclick="scrollToOrderForm()" class="shrink-0 px-3.5 py-2 rounded-2xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-pen"></i> <span>Titip Toko Bebas</span>
+                </button>
+            </div>
+
+            <!-- ETALASE KATALOG TOKO UMKM (GRID KARTU VISUAL ALA GOFOOD) -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between px-0.5">
+                    <div>
+                        <h3 class="font-extrabold text-base text-slate-900">Rekomendasi Mitra UMKM Jombang</h3>
+                        <p class="text-[11px] text-slate-500">Ketuk <strong>+ Tambah</strong> pada menu di bawah untuk langsung masuk keranjang</p>
+                    </div>
+                    <button type="button" onclick="switchRole('umkm')" class="text-[11px] font-bold text-emerald-700 hover:underline">
+                        + Buka Toko
+                    </button>
+                </div>
+                <div id="penitip-umkm-showcase" class="space-y-4">
+                    <!-- Render via JS -->
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start pt-2">
+                <!-- FORM BUAT PESANAN / KERANJANG CHECKOUT -->
+                <div id="checkout-card" class="lg:col-span-6 bg-white rounded-3xl shadow-sm border border-slate-200 p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600">Keranjang & Titip Bebas</span>
+                            <h3 class="font-extrabold text-lg text-slate-900">Detail Pesanan & Pengantaran</h3>
+                        </div>
+                        <span class="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fa-solid fa-basket-shopping"></i>
+                        </span>
+                    </div>
+
+                    <form id="order-form" onsubmit="createOrder(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Penitip</label>
+                                <input type="text" id="input-name" required placeholder="Contoh: Mbak Rina" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">No. WhatsApp</label>
+                                <input type="tel" id="input-wa" required placeholder="081234567890" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                        </div>
+
+                        <!-- DAFTAR TITIK BELANJA / TOKO (MULTI-STOP) -->
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-slate-800">Daftar Toko / Titik Beli</label>
+                                <button type="button" onclick="addStopRow()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 transition flex items-center gap-1">
+                                    <i class="fa-solid fa-plus"></i> Tambah Titik Lain
+                                </button>
+                            </div>
+                            <div id="stops-container" class="space-y-3">
+                                <!-- Baris titik belanja dirender oleh JS -->
+                            </div>
+                            <p class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-2xl border border-slate-200/70">
+                                <i class="fa-solid fa-circle-info text-emerald-600 mr-1"></i>
+                                <strong>Info Ongkir Multi-Stop:</strong> Banyak menu di 1 toko = <strong>Rp 0</strong> tambahan. Beda toko 1 area = <strong>+Rp 3.000</strong>. Beda toko & beda area = <strong>+Rp 5.000</strong>.
+                            </p>
+                        </div>
+
+                        <!-- DESA / KELURAHAN TUJUAN & PIN LOKASI GPS -->
+                        <div class="pt-1 space-y-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <label class="block text-xs font-semibold text-slate-700">Alamat Tujuan Pengantaran</label>
+                                <button type="button" onclick="detectCustomerGPS()" id="btn-detect-gps" class="text-[11px] font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2.5 py-1 rounded-xl transition flex items-center gap-1">
+                                    <i class="fa-solid fa-location-crosshairs"></i> Pin GPS Saya
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <select id="input-village" onchange="onVillageChange()" class="w-full px-3 py-2.5 rounded-2xl border border-slate-200 text-xs font-semibold bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    <optgroup label="Zona 1 — Pusat Kota (0–4 km • Rp 5.000)">
+                                        <option value="Kel. Kaliwungu|ZONA_1">Kel. Kaliwungu (Pusat Kota)</option>
+                                        <option value="Kel. Jombatan|ZONA_1">Kel. Jombatan (Pusat Kota)</option>
+                                        <option value="Kel. Jelakombo|ZONA_1">Kel. Jelakombo (Pusat Kota)</option>
+                                        <option value="Kel. Kepanjen|ZONA_1">Kel. Kepanjen (Pusat Kota)</option>
+                                        <option value="Desa Sengon|ZONA_1">Desa Sengon (Pusat Kota)</option>
+                                        <option value="Desa Pulo Lor|ZONA_1">Desa Pulo Lor (Pusat Kota)</option>
+                                    </optgroup>
+                                    <optgroup label="Zona 2 — Pinggir Kota (4,1–8 km • Rp 8.000)">
+                                        <option value="Desa Candimulyo|ZONA_2">Desa Candimulyo (Pinggir Kota)</option>
+                                        <option value="Desa Sambongdukuh|ZONA_2">Desa Sambongdukuh (Pinggir Kota)</option>
+                                        <option value="Desa Mojongapit|ZONA_2">Desa Mojongapit (Pinggir Kota)</option>
+                                        <option value="Desa Plandi|ZONA_2">Desa Plandi (Pinggir Kota)</option>
+                                        <option value="Desa Tunggorono|ZONA_2">Desa Tunggorono (Pinggir Kota)</option>
+                                        <option value="Desa Denanyar|ZONA_2">Desa Denanyar (Pinggir Kota)</option>
+                                        <option value="Desa Tambakrejo|ZONA_2">Desa Tambakrejo (Pinggir Kota)</option>
+                                    </optgroup>
+                                    <optgroup label="Zona 3 — Perbatasan (8,1–12 km • Rp 11.000)">
+                                        <option value="Area Tambakberas|ZONA_3">Area Tambakberas (Perbatasan)</option>
+                                        <option value="Area Peterongan|ZONA_3">Area Peterongan (Perbatasan)</option>
+                                        <option value="Area Diwek / Ceweng|ZONA_3">Area Diwek / Ceweng (Perbatasan)</option>
+                                        <option value="Desa Jabon / Banjardowo|ZONA_3">Desa Jabon / Banjardowo (Perbatasan)</option>
+                                    </optgroup>
+                                </select>
+                                <input type="text" id="input-address" required placeholder="Detail patokan rumah (Blok/No/Warna pagar)" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+
+                            <!-- Input Link Shareloc Google Maps Opsional -->
+                            <div class="relative">
+                                <i class="fa-solid fa-link text-slate-400 text-xs absolute left-3.5 top-3"></i>
+                                <input type="url" id="input-shareloc-link" placeholder="Opsional: Tempel (Paste) Link Shareloc Google Maps..." class="w-full pl-9 pr-3.5 py-2 rounded-2xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50/70">
+                            </div>
+
+                            <!-- Hidden/Synced Zona Input -->
+                            <input type="hidden" id="input-delivery-zone" value="ZONA_1">
+
+                            <!-- Badge Hasil Deteksi GPS Pemesan -->
+                            <div id="customer-gps-badge" class="hidden bg-sky-50 border border-sky-200 rounded-2xl px-3 py-2 flex items-center justify-between gap-2 text-[11px] text-sky-900">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-map-pin text-sky-600"></i>
+                                    <span id="customer-gps-info">Titik GPS terkunci (±0 km dari pusat kota)</span>
+                                </div>
+                                <button type="button" onclick="clearCustomerGPS()" class="text-sky-600 hover:text-sky-800 font-bold underline">Reset</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Metode Pembayaran Midman</label>
+                            <select id="input-payment-method" class="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="QRIS">Scan QRIS Midman (Dana Ditahan Sistem)</option>
+                                <option value="TRANSFER">Transfer Bank Midman (BCA / BRI / Mandiri)</option>
+                                <option value="CASH_PICKUP">Tunai — Kurir Jemput Uang Dulu ke Lokasi</option>
+                            </select>
+                        </div>
+
+                        <!-- Ringkasan Kalkulator Biaya -->
+                        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2 text-xs">
+                            <div class="flex justify-between text-slate-600">
+                                <span>Total Estimasi Harga Barang (<span id="calc-stop-count">1</span> titik):</span>
+                                <span id="calc-item-price" class="font-semibold text-slate-800">Rp 25.000</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600">
+                                <span id="calc-base-ongkir-label">Ongkir Utama (Zona 1 — 0–4 km):</span>
+                                <span id="calc-base-ongkir" class="font-semibold text-slate-800">Rp 5.000</span>
+                            </div>
+                            <div id="calc-extra-stop-row" class="hidden flex justify-between text-amber-700 font-medium">
+                                <span id="calc-extra-stop-label">Biaya Tambahan Titik (0 titik):</span>
+                                <span id="calc-extra-stop-fee" class="font-semibold">+Rp 0</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600">
+                                <span>Biaya Layanan Midman & Escrow:</span>
+                                <span class="font-semibold text-slate-800">Rp 3.000</span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-bold text-slate-900">
+                                <span>Total Pembayaran Midman:</span>
+                                <span id="calc-total" class="text-emerald-600 text-base">Rp 33.000</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                            <span>Pesan Sekarang • Lanjut Bayar</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- DAFTAR PESANAN & PELACAKAN PENITIP -->
+                <div id="penitip-orders-section" class="lg:col-span-6 space-y-4">
+                    <div class="flex items-center justify-between px-0.5">
+                        <h3 class="font-extrabold text-base sm:text-lg text-slate-900">Pesanan & Pelacakan Live</h3>
+                        <span class="text-[11px] text-slate-500">Konfirmasi saat barang tiba</span>
+                    </div>
+                    <div id="penitip-orders-list" class="space-y-4">
+                        <!-- Render via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 2: ADMIN MIDMAN (VERIFIKASI PEMBAYARAN & VIRTUAL LEDGER)       -->
+        <!-- =================================================================== -->
+        <section id="view-admin" class="hidden space-y-6 animate-fade-in">
+            <!-- Escrow Ledger Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Menunggu Validasi</span>
+                        <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-clock"></i></span>
+                    </div>
+                    <p id="stat-pending-amount" class="text-2xl font-extrabold text-slate-900">Rp 0</p>
+                    <p class="text-xs text-slate-500 mt-1">Bukti bayar masuk perlu dicek</p>
+                </div>
+
+                <div class="bg-white rounded-3xl p-5 border border-emerald-200 shadow-sm ring-1 ring-emerald-500/10">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Dana Ditahan (HELD)</span>
+                        <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-lock"></i></span>
+                    </div>
+                    <p id="stat-held-amount" class="text-2xl font-extrabold text-emerald-600">Rp 0</p>
+                    <p class="text-xs text-slate-500 mt-1">Aman di Rekening Penampung Midman</p>
+                </div>
+
+                <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-sky-700 uppercase tracking-wider">Siap Cair (RELEASED)</span>
+                        <span class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center"><i class="fa-solid fa-circle-check"></i></span>
+                    </div>
+                    <p id="stat-released-amount" class="text-2xl font-extrabold text-sky-600">Rp 0</p>
+                    <p class="text-xs text-slate-500 mt-1">Terkonfirmasi diterima penitip</p>
+                </div>
+            </div>
+
+            <!-- Virtual Ledger Table / Cards -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-900">Buku Besar Virtual Midman (Escrow Ledger)</h3>
+                        <p class="text-xs text-slate-500">Validasi mutasi masuk & pantau bukti serah-terima ber-GPS sebelum pencairan dana.</p>
+                    </div>
+                </div>
+                <div id="admin-orders-list" class="divide-y divide-slate-100">
+                    <!-- Render via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 3: PENGIRIM / KURIR (AMBIL ORDER & KAMERA TIMESTAMP GPS)       -->
+        <!-- =================================================================== -->
+        <section id="view-kurir" class="hidden space-y-6 animate-fade-in">
+            <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <span class="inline-block px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-semibold mb-2 border border-sky-400/30">
+                        <i class="fa-solid fa-helmet-safety mr-1"></i> Dashboard Operasional Pengirim
+                    </span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold">Tugas Pengantaran Aktif</h2>
+                    <p class="text-slate-300 text-xs sm:text-sm mt-1">Konfirmasi pembelian barang, lalu wajib ambil foto bukti ber-GPS & waktu saat menyerahkan ke penitip.</p>
+                </div>
+                <div class="bg-slate-800 px-4 py-3 rounded-2xl border border-slate-700 text-xs space-y-1">
+                    <div class="text-slate-400">Status GPS Perangkat:</div>
+                    <div class="font-semibold text-emerald-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span id="kurir-gps-status">Aktif • Jombang Kota</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="kurir-orders-list" class="space-y-4">
+                <!-- Render via JS -->
+            </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 4: MITRA TOKO UMKM (DAFTAR TOKO & TAMBAH PRODUK)               -->
+        <!-- =================================================================== -->
+        <section id="view-umkm" class="hidden space-y-6 animate-fade-in">
+            <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white rounded-3xl p-6 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-semibold mb-2">
+                        <i class="fa-solid fa-handshake mr-1"></i> Kemitraan UMKM Lokal Jombang
+                    </span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold">Portal Mitra Toko & Katalog Produk</h2>
+                    <p class="text-amber-50 text-xs sm:text-sm mt-1">Daftarkan warung, kedai, atau toko Anda agar produknya tampil langsung di halaman pemesanan penitip.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- FORM PENDAFTARAN TOKO BARU & TAMBAH PRODUK -->
+                <div class="lg:col-span-5 space-y-5">
+                    <!-- Form 1: Daftar Toko UMKM Baru -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                        <h3 class="font-bold text-base text-slate-900 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-shop text-amber-500"></i>
+                            <span>1. Daftarkan Toko / Warung Baru</span>
+                        </h3>
+                        <form onsubmit="registerUmkmStore(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Toko / Usaha</label>
+                                <input type="text" id="umkm-store-name" required placeholder="Contoh: Seblak Prasmanan Teh Neng" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori Usaha</label>
+                                    <select id="umkm-store-category" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                        <option value="Kuliner & Jajan">Kuliner & Jajan</option>
+                                        <option value="Minuman & Kopi">Minuman & Kopi</option>
+                                        <option value="Sembako & Harian">Sembako & Harian</option>
+                                        <option value="Apotek & Kesehatan">Apotek & Kesehatan</option>
+                                        <option value="Fashion & Lainnya">Fashion & Lainnya</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Zona Lokasi Toko</label>
+                                    <select id="umkm-store-zone" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                        <option value="ZONA_1">Zona 1 (Pusat Kota)</option>
+                                        <option value="ZONA_2">Zona 2 (Pinggir Kota)</option>
+                                        <option value="ZONA_3">Zona 3 (Perbatasan)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Patokan Alamat Toko</label>
+                                <input type="text" id="umkm-store-address" required placeholder="Contoh: Jl. Gus Dur No. 18 (Depan Kampus)" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-plus-circle"></i> Simpan & Daftarkan Toko
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Form 2: Tambah Produk ke Toko Terdaftar -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                        <h3 class="font-bold text-base text-slate-900 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-tags text-emerald-600"></i>
+                            <span>2. Tambah Menu / Produk ke Toko</span>
+                        </h3>
+                        <form onsubmit="addUmkmProduct(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Toko Terdaftar</label>
+                                <select id="umkm-select-store" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs bg-white font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    <!-- Diisi via JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Produk / Menu</label>
+                                <input type="text" id="umkm-product-name" required placeholder="Contoh: Paket Komplit Pedas Level 3" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Harga Jual Toko (Rp)</label>
+                                    <input type="number" id="umkm-product-price" required min="1000" step="500" placeholder="15000" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Varian Singkat</label>
+                                    <input type="text" id="umkm-product-note" placeholder="Porsi jumbo / free es teh" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Foto Produk (Unggah Gambar / Opsional)</label>
+                                <div class="flex items-center gap-3">
+                                    <label class="flex-1 cursor-pointer flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 text-xs font-semibold text-slate-600 transition">
+                                        <i class="fa-solid fa-image text-emerald-600"></i>
+                                        <span id="umkm-photo-label">Pilih Foto Menu / Produk...</span>
+                                        <input type="file" id="umkm-product-photo" accept="image/*" onchange="previewUmkmProductPhoto(event)" class="hidden">
+                                    </label>
+                                    <img id="umkm-photo-preview" src="" alt="Preview" class="hidden w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-box-open"></i> Tambahkan Produk ke Etalase
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- DAFTAR TOKO & PRODUK YANG SUDAH TERDAFTAR -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-base text-slate-900">Daftar Toko & Produk Terdaftar</h3>
+                        <span id="umkm-total-summary" class="text-xs text-slate-500">2 toko • 4 produk</span>
+                    </div>
+                    <div id="umkm-registered-list" class="space-y-4">
+                        <!-- Render via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- FLOATING CHECKOUT BAR ALA GOFOOD (MUNCUL SAAT ADA ITEM DI KERANJANG)  -->
+    <!-- ===================================================================== -->
+    <div id="floating-cart-bar" class="fixed bottom-16 md:bottom-5 inset-x-0 z-30 px-3.5 pointer-events-none transition-all duration-300">
+        <div class="max-w-lg mx-auto pointer-events-auto">
+            <button type="button" onclick="scrollToOrderForm()" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white rounded-2xl px-4 py-3 shadow-xl shadow-emerald-900/25 flex items-center justify-between gap-3 border border-emerald-400/30">
+                <div class="flex items-center gap-3 text-left min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center font-extrabold text-sm shrink-0">
+                        <span id="float-cart-count">1</span>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-semibold text-emerald-100 truncate" id="float-cart-title">Keranjang Titipan • 1 Lokasi</p>
+                        <p class="text-xs font-extrabold truncate" id="float-cart-subtitle">Ketuk untuk lengkapi alamat & bayar</p>
+                    </div>
+                </div>
+                <div class="text-right shrink-0 flex items-center gap-2">
+                    <span class="font-extrabold text-sm" id="float-cart-total">Rp 33.000</span>
+                    <i class="fa-solid fa-circle-arrow-right text-base"></i>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- BOTTOM NAVIGATION BAR KHUSUS ANDROID / MOBILE (ALA GOFOOD / GRAB)      -->
+    <!-- ===================================================================== -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 px-2 py-1.5 shadow-[0_-4px_16px_rgba(15,23,42,0.06)]">
+        <div class="grid grid-cols-4 gap-1">
+            <button type="button" onclick="switchRole('penitip')" id="mob-tab-penitip" class="mob-role-btn flex flex-col items-center justify-center py-1 rounded-xl text-emerald-600 font-bold">
+                <i class="fa-solid fa-house text-base mb-0.5"></i>
+                <span class="text-[10px]">Beranda</span>
+            </button>
+            <button type="button" onclick="switchRole('kurir')" id="mob-tab-kurir" class="mob-role-btn relative flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-semibold">
+                <i class="fa-solid fa-motorcycle text-base mb-0.5"></i>
+                <span class="text-[10px]">Kurir</span>
+                <span id="mob-badge-kurir" class="hidden absolute top-0.5 right-4 bg-sky-500 text-white text-[9px] font-extrabold px-1.5 rounded-full">0</span>
+            </button>
+            <button type="button" onclick="switchRole('umkm')" id="mob-tab-umkm" class="mob-role-btn flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-semibold">
+                <i class="fa-solid fa-store text-base mb-0.5"></i>
+                <span class="text-[10px]">Mitra Toko</span>
+            </button>
+            <button type="button" onclick="switchRole('admin')" id="mob-tab-admin" class="mob-role-btn relative flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-semibold">
+                <i class="fa-solid fa-shield-halved text-base mb-0.5"></i>
+                <span class="text-[10px]">Midman</span>
+                <span id="mob-badge-admin" class="hidden absolute top-0.5 right-4 bg-amber-500 text-slate-950 text-[9px] font-extrabold px-1.5 rounded-full">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 1: PEMBAYARAN MIDMAN (QRIS / TRANSFER / CASH PICKUP)            -->
+    <!-- ===================================================================== -->
+    <div id="payment-modal" class="fixed inset-0 z-50 hidden bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <span class="text-[11px] font-bold text-emerald-600 uppercase">Pembayaran Midman</span>
+                    <h3 id="pay-modal-title" class="font-extrabold text-lg text-slate-900">Order #JBG-101</h3>
+                </div>
+                <button onclick="closePaymentModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="pay-modal-body" class="space-y-4">
+                <!-- Dynamic Payment Content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: KAMERA TIMESTAMP & LOKASI GPS OTOMATIS (UNTUK PENGIRIM)      -->
+    <!-- ===================================================================== -->
+    <div id="camera-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 text-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-700 space-y-4 p-5 animate-fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-bold text-sky-400 uppercase tracking-wider"><i class="fa-solid fa-camera mr-1"></i> Wajib Bukti Serah-Terima</span>
+                    <h3 id="cam-modal-title" class="font-bold text-base">Kamera Timestamp & GPS</h3>
+                </div>
+                <button onclick="closeCameraModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Live Camera / Canvas Preview Container -->
+            <div class="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] border border-slate-700 flex items-center justify-center">
+                <video id="camera-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                <canvas id="camera-canvas" class="w-full h-full object-cover"></canvas>
+
+                <!-- Live GPS & Time Overlay Preview -->
+                <div id="live-watermark-overlay" class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3.5 text-left pointer-events-none">
+                    <div class="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
+                        <i class="fa-solid fa-shield-check"></i>
+                        <span>JASTIP JOMBANG VERIFIED PROOF</span>
+                    </div>
+                    <p id="overlay-time" class="text-xs font-mono font-bold text-white mt-0.5">Memuat waktu...</p>
+                    <p id="overlay-gps" class="text-[11px] font-mono text-sky-300">Mendeteksi titik GPS...</p>
+                    <p id="overlay-address" class="text-[11px] text-slate-200 truncate">Area Kota Jombang, Jawa Timur</p>
+                </div>
+            </div>
+
+            <p id="cam-mode-hint" class="text-[11px] text-slate-400 text-center">
+                Kamera mengunci akses galeri. Watermark waktu & koordinat GPS dicetak otomatis di atas foto.
+            </p>
+
+            <!-- Action Buttons -->
+            <div id="cam-controls-capture" class="flex gap-3">
+                <button type="button" onclick="captureTimestampPhoto()" class="flex-1 py-3 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-slate-950 font-extrabold text-sm shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Jepret Foto Bukti Sekarang</span>
+                </button>
+            </div>
+
+            <div id="cam-controls-confirm" class="hidden flex gap-3">
+                <button type="button" onclick="retakePhoto()" class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition">
+                    Ulangi Foto
+                </button>
+                <button type="button" onclick="submitDeliveryProof()" class="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check-double"></i>
+                    <span>Kirim Bukti & Konfirmasi Sampai</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: PANDUAN INSTAL APLIKASI ANDROID (PWA & BUILD FILE .APK)     -->
+    <!-- ===================================================================== -->
+    <div id="install-modal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <i class="fa-brands fa-android text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Versi Mobile Android</span>
+                        <h3 class="font-extrabold text-base text-slate-900">Instal Aplikasi Jastip Jombang</h3>
+                    </div>
+                </div>
+                <button onclick="closeInstallAppModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-600">
+                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 space-y-2 text-emerald-950">
+                    <p class="font-bold text-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt text-emerald-600"></i>
+                        <span>Cara 1: Instal Langsung ke HP Android (Tanpa Play Store)</span>
+                    </p>
+                    <ol class="list-decimal list-inside space-y-1 text-emerald-900">
+                        <li>Buka website <strong>Jastip Jombang</strong> ini melalui browser <strong>Google Chrome</strong> di HP Android.</li>
+                        <li>Ketuk ikon <strong>titik tiga (⋮)</strong> di pojok kanan atas Chrome.</li>
+                        <li>Pilih menu <strong>"Instal aplikasi"</strong> atau <strong>"Tambahkan ke Layar utama"</strong>.</li>
+                        <li>Ikon aplikasi <strong>Jastip Jombang</strong> langsung terpasang di menu HP Anda dan berjalan layar penuh!</li>
+                    </ol>
+                    <button type="button" id="btn-trigger-native-install" onclick="triggerNativePwaInstall()" class="hidden w-full mt-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow transition">
+                        <i class="fa-solid fa-download mr-1"></i> Pasang Aplikasi Sekarang (1-Klik)
+                    </button>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+                    <p class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+                        <i class="fa-solid fa-box-archive text-sky-600"></i>
+                        <span>Cara 2: Ubah Jadi File Mentah (.APK) untuk Dibagikan ke Kurir</span>
+                    </p>
+                    <ol class="list-decimal list-inside space-y-1 text-slate-700">
+                        <li>Unggah file HTML website ini ke hosting gratis seperti <strong>Vercel</strong>, <strong>Netlify</strong>, atau <strong>GitHub Pages</strong> agar memiliki link HTTPS.</li>
+                        <li>Buka situs gratis <strong>PWABuilder.com</strong> di browser laptop.</li>
+                        <li>Masukkan link website Anda, lalu klik <strong>Package for Stores $\rightarrow$ Android</strong>.</li>
+                        <li>Unduh file <strong><code>JastipJombang.apk</code></strong> yang dihasilkan dan kirimkan lewat WhatsApp ke seluruh kurir & mitra UMKM di Jombang!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <button type="button" onclick="closeInstallAppModal()" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
+                Mengerti, Tutup Panduan
+            </button>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT APPLICATION LOGIC                                          -->
+    <!-- ===================================================================== -->
+    <script>
+        // =====================================================================
+        // INISIALISASI PROGRESSIVE WEB APP (PWA MANIFEST & SERVICE WORKER)
+        // =====================================================================
+        let deferredInstallPrompt = null;
+
+        function initPwaCapabilities() {
+            // 1. Buat ikon aplikasi SVG dinamis untuk Home Screen Android/iOS
+            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#10b981"/><path d="M160 192h192l20 208H140l20-208zm48-32a48 48 0 0 1 96 0v32h-96v-32z" fill="#ffffff"/></svg>`;
+            const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgIcon);
+
+            // 2. Suntikkan Web App Manifest dinamis agar browser mengenali sebagai Aplikasi Android
+            const manifestObj = {
+                name: 'Jastip Jombang — Midman & Escrow',
+                short_name: 'Jastip Jombang',
+                description: 'Jastip segala barang area dalam kota Jombang dengan sistem rekening bersama (Midman & Escrow).',
+                start_url: window.location.href,
+                display: 'standalone',
+                background_color: '#0f172a',
+                theme_color: '#10b981',
+                orientation: 'portrait',
+                icons: [
+                    { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+                    { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+                ]
+            };
+
+            const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = URL.createObjectURL(manifestBlob);
+            document.head.appendChild(manifestLink);
+
+            // 3. Tangkap event instalasi native Android Chrome
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredInstallPrompt = e;
+                const nativeBtn = document.getElementById('btn-trigger-native-install');
+                if (nativeBtn) nativeBtn.classList.remove('hidden');
+            });
+        }
+
+        function openInstallAppModal() {
+            document.getElementById('install-modal').classList.remove('hidden');
+        }
+
+        function closeInstallAppModal() {
+            document.getElementById('install-modal').classList.add('hidden');
+        }
+
+        async function triggerNativePwaInstall() {
+            if (!deferredInstallPrompt) {
+                showToast('Gunakan menu titik tiga (⋮) di Chrome HP lalu pilih "Instal aplikasi".', 'info');
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            if (outcome === 'accepted') {
+                showToast('Aplikasi Jastip Jombang berhasil dipasang ke layar utama!', 'success');
+                closeInstallAppModal();
+            }
+            deferredInstallPrompt = null;
+        }
+
+        // =====================================================================
+        // STATE & KONFIGURASI ZONA AREA KOTA JOMBANG
+        // =====================================================================
+        const FEE_MIDMAN = 3000;
+        const EXTRA_STOP_SAME_ZONE = 3000; // Tambahan per titik jika masih 1 zona/area
+        const EXTRA_STOP_DIFF_ZONE = 5000; // Tambahan per titik jika beda zona/area
+
+        const ZONES = {
+            ZONA_1: {
+                name: 'Zona 1 (0–4 km • Pusat Kota)',
+                areas: 'Alun-Alun, Kaliwungu, Jombatan, Jelakombo, Kepanjen, Sengon',
+                baseOngkir: 5000
+            },
+            ZONA_2: {
+                name: 'Zona 2 (4,1–8 km • Pinggir Kota)',
+                areas: 'Candimulyo, Sambongdukuh, Mojongapit, Plandi, Tunggorono, Denanyar',
+                baseOngkir: 8000
+            },
+            ZONA_3: {
+                name: 'Zona 3 (8,1–12 km • Perbatasan)',
+                areas: 'Tambakberas, Peterongan, Ceweng, Diwek, Jabon',
+                baseOngkir: 11000
+            }
+        };
+
+        // Daftar titik belanja dinamis pada form pemesanan
+        let stopRows = [
+            { id: 1, storeName: '', zone: 'ZONA_1', items: '', estPrice: 25000 }
+        ];
+        let nextStopId = 2;
+
+        let activePaymentOrderId = null;
+        let activeCameraOrderId = null;
+        let videoStream = null;
+        let capturedDataUrl = null;
+        let clockInterval = null;
+        let currentCoords = { lat: -7.5468, lng: 112.2331, area: "Jl. KH. Wahid Hasyim, Kec. Jombang" };
+        let customerGPS = null; // Menyimpan koordinat & estimasi jarak pemesan
+        let selectedUmkmCategory = 'ALL'; // Filter kategori ala GoFood
+
+        // Titik pusat acuan (Alun-alun Jombang) untuk hitung jarak otomatis
+        const JOMBANG_CENTER = { lat: -7.5463, lng: 112.2330 };
+
+        // =====================================================================
+        // DATA MITRA TOKO UMKM & KATALOG PRODUK TERDAFTAR
+        // =====================================================================
+        let pendingUmkmPhotoUrl = null;
+
+        let umkmStores = [
+            {
+                id: 'UMKM-1',
+                name: 'Tahu Campur H. Abdul (Alun-Alun)',
+                category: 'Kuliner & Jajan',
+                zone: 'ZONA_1',
+                address: 'Jl. KH. Wahid Hasyim (Selatan Alun-Alun Jombang)',
+                products: [
+                    {
+                        id: 'PRD-101',
+                        name: 'Tahu Campur Komplit Daging',
+                        price: 15000,
+                        note: 'Porsi standar, sambal pisah',
+                        photo: 'https://placehold.co/300x300/10b981/ffffff?text=Tahu+Campur+Komplit'
+                    },
+                    {
+                        id: 'PRD-102',
+                        name: 'Tahu Campur Spesial Kikil',
+                        price: 18000,
+                        note: 'Ekstra kikil & perkedel',
+                        photo: 'https://placehold.co/300x300/059669/ffffff?text=Tahu+Campur+Kikil'
+                    }
+                ]
+            },
+            {
+                id: 'UMKM-2',
+                name: 'Kopi Susu & Roti Bakar Mojongapit',
+                category: 'Minuman & Kopi',
+                zone: 'ZONA_2',
+                address: 'Jl. Bupati RAA Soeroadiningrat, Mojongapit',
+                products: [
+                    {
+                        id: 'PRD-201',
+                        name: 'Es Kopi Susu Gula Aren',
+                        price: 12000,
+                        note: 'Cup 16oz, less ice/normal',
+                        photo: 'https://placehold.co/300x300/d97706/ffffff?text=Es+Kopi+Susu'
+                    },
+                    {
+                        id: 'PRD-202',
+                        name: 'Roti Bakar Cokelat Keju',
+                        price: 14000,
+                        note: 'Isi 4 potong tebal',
+                        photo: 'https://placehold.co/300x300/ea580c/ffffff?text=Roti+Bakar+Keju'
+                    }
+                ]
+            }
+        ];
+
+        // Contoh 1 transaksi awal dengan multi-stop beda area
+        let orders = [
+            {
+                id: 'JBG-101',
+                customerName: 'Mas Dimas',
+                wa: '085712345678',
+                stops: [
+                    { storeName: 'Tahu Campur H. Abdul (Alun-Alun)', zone: 'ZONA_1', items: '2x Tahu Campur Komplit Daging', estPrice: 30000 },
+                    { storeName: 'Apotek Sehat Jl. Mojongapit', zone: 'ZONA_2', items: '1x Vitamin C & Obat Flu', estPrice: 22000 }
+                ],
+                village: 'Desa Sengon',
+                deliveryZone: 'ZONA_1',
+                address: 'Jl. Pattimura No. 45, Sengon, Jombang',
+                sharelocLink: 'https://maps.google.com/?q=-7.5491,112.2355',
+                customerCoords: null,
+                itemPrice: 52000,
+                baseOngkir: 5000,
+                extraStopFee: 5000, // Karena titik ke-2 beda zona (Zona 2)
+                ongkir: 10000,
+                fee: 3000,
+                totalPrice: 65000,
+                paymentMethod: 'QRIS',
+                status: 'MENUNGGU_VERIFIKASI_ADMIN',
+                escrowStatus: 'PENDING',
+                paymentProofNote: 'Transfer QRIS a.n Dimas Pratama (Rp 65.000)',
+                pickupTime: null,
+                deliveryPhoto: null,
+                deliveryTimestamp: null,
+                deliveryLocation: null,
+                createdAt: 'Hari ini, 11:20 WIB'
+            }
+        ];
+
+        // =====================================================================
+        // UTILITY FUNCTIONS & KALKULATOR MULTI-STOP ZONA
+        // =====================================================================
+        function formatRupiah(num) {
+            return 'Rp ' + Number(num).toLocaleString('id-ID');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-slate-900 text-white border-emerald-500',
+                warning: 'bg-amber-50 text-amber-900 border-amber-400',
+                info: 'bg-sky-900 text-white border-sky-400'
+            };
+            const icons = {
+                success: 'fa-circle-check text-emerald-400',
+                warning: 'fa-triangle-exclamation text-amber-500',
+                info: 'fa-circle-info text-sky-300'
+            };
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border-l-4 shadow-xl text-xs font-medium animate-fade-in ${colors[type] || colors.success}`;
+            toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.success} text-base"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function copyTextFallback(textToCopy, label = 'Teks') {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                showToast(`${label} berhasil disalin! Siap ditempel di Google Maps.`, 'success');
+            } catch (err) {
+                showToast(`Gagal menyalin otomatis. Silakan salin manual: ${textToCopy}`, 'warning');
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        function switchRole(role) {
+            ['penitip', 'admin', 'kurir', 'umkm'].forEach(r => {
+                document.getElementById(`view-${r}`).classList.add('hidden');
+
+                // Desktop Top Tab
+                const tab = document.getElementById(`tab-${r}`);
+                if (tab) {
+                    tab.classList.remove('bg-white', 'text-emerald-800', 'shadow');
+                    tab.classList.add('text-emerald-50');
+                }
+
+                // Mobile Bottom Nav Tab
+                const mobTab = document.getElementById(`mob-tab-${r}`);
+                if (mobTab) {
+                    mobTab.classList.remove('text-emerald-600', 'font-bold');
+                    mobTab.classList.add('text-slate-400', 'font-semibold');
+                }
+            });
+
+            document.getElementById(`view-${role}`).classList.remove('hidden');
+
+            const activeTab = document.getElementById(`tab-${role}`);
+            if (activeTab) {
+                activeTab.classList.remove('text-emerald-50');
+                activeTab.classList.add('bg-white', 'text-emerald-800', 'shadow');
+            }
+
+            const activeMobTab = document.getElementById(`mob-tab-${role}`);
+            if (activeMobTab) {
+                activeMobTab.classList.remove('text-slate-400', 'font-semibold');
+                activeMobTab.classList.add('text-emerald-600', 'font-bold');
+            }
+
+            // Tampilkan search bar & floating checkout bar hanya di beranda penitip
+            const searchBar = document.getElementById('mobile-search-bar');
+            const floatCart = document.getElementById('floating-cart-bar');
+            if (searchBar) searchBar.classList.toggle('hidden', role !== 'penitip');
+            if (floatCart) floatCart.classList.toggle('hidden', role !== 'penitip');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderAll();
+        }
+
+        function scrollToOrderForm() {
+            const el = document.getElementById('checkout-card');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function setUmkmCategoryFilter(category) {
+            selectedUmkmCategory = category;
+            document.querySelectorAll('.cat-pill').forEach(btn => {
+                btn.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
+                btn.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+            });
+            const activePill = document.getElementById(`cat-btn-${category}`);
+            if (activePill) {
+                activePill.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+                activePill.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
+            }
+            renderUmkmSection();
+        }
+
+        // =====================================================================
+        // MANAJEMEN BARIS TITIK BELANJA (MULTI-STOP)
+        // =====================================================================
+        function addStopRow() {
+            stopRows.push({
+                id: nextStopId++,
+                storeName: '',
+                zone: 'ZONA_1',
+                items: '',
+                estPrice: 15000
+            });
+            renderStopRows();
+        }
+
+        function removeStopRow(id) {
+            if (stopRows.length <= 1) return;
+            stopRows = stopRows.filter(s => s.id !== id);
+            renderStopRows();
+        }
+
+        function updateStopField(id, field, value) {
+            const row = stopRows.find(s => s.id === id);
+            if (!row) return;
+            row[field] = field === 'estPrice' ? (parseInt(value) || 0) : value;
+            recalculatePricing();
+            if (field === 'zone') {
+                renderStopRows();
+            }
+        }
+
+        function renderStopRows() {
+            const container = document.getElementById('stops-container');
+            const primaryZone = stopRows[0].zone;
+
+            container.innerHTML = stopRows.map((stop, index) => {
+                const isFirst = index === 0;
+                const isSameZone = stop.zone === primaryZone;
+                const badgeText = isFirst
+                    ? 'Titik Utama (Included)'
+                    : (isSameZone ? `1 Area (+${formatRupiah(EXTRA_STOP_SAME_ZONE)})` : `Beda Area (+${formatRupiah(EXTRA_STOP_DIFF_ZONE)})`);
+                const badgeClass = isFirst
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : (isSameZone ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800');
+
+                return `
+                    <div class="p-3.5 rounded-2xl border ${isFirst ? 'border-slate-200 bg-white' : 'border-amber-200/80 bg-amber-50/30'} space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-5 h-5 rounded-full bg-slate-800 text-white text-[10px] font-bold flex items-center justify-center">${index + 1}</span>
+                                <span class="text-xs font-bold text-slate-800">Lokasi Beli #${index + 1}</span>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${badgeClass}">${badgeText}</span>
+                            </div>
+                            ${!isFirst ? `
+                                <button type="button" onclick="removeStopRow(${stop.id})" class="text-xs text-rose-500 hover:text-rose-700 font-semibold">
+                                    <i class="fa-solid fa-trash-can"></i> Hapus
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                            <div class="sm:col-span-7">
+                                <input type="text" required value="${stop.storeName}" oninput="updateStopField(${stop.id}, 'storeName', this.value)" placeholder="Nama Toko / Warung (Misal: Seblak Alun-Alun)" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="sm:col-span-5">
+                                <select onchange="updateStopField(${stop.id}, 'zone', this.value)" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    <option value="ZONA_1" ${stop.zone === 'ZONA_1' ? 'selected' : ''}>Zona 1 (Pusat Kota)</option>
+                                    <option value="ZONA_2" ${stop.zone === 'ZONA_2' ? 'selected' : ''}>Zona 2 (Pinggir Kota)</option>
+                                    <option value="ZONA_3" ${stop.zone === 'ZONA_3' ? 'selected' : ''}>Zona 3 (Perbatasan)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                            <div class="sm:col-span-8">
+                                <input type="text" required value="${stop.items}" oninput="updateStopField(${stop.id}, 'items', this.value)" placeholder="Daftar barang di toko ini (boleh banyak item)" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="sm:col-span-4">
+                                <div class="relative">
+                                    <span class="absolute left-2.5 top-2 text-[11px] text-slate-400 font-semibold">Rp</span>
+                                    <input type="number" required min="1000" step="500" value="${stop.estPrice}" oninput="updateStopField(${stop.id}, 'estPrice', this.value)" placeholder="Harga" class="w-full pl-7 pr-2.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            recalculatePricing();
+        }
+
+        function calculatePricingBreakdown() {
+            const deliveryZone = document.getElementById('input-delivery-zone').value;
+            const baseOngkir = ZONES[deliveryZone].baseOngkir;
+
+            let totalItemPrice = 0;
+            let extraStopFee = 0;
+            let sameZoneCount = 0;
+            let diffZoneCount = 0;
+            const primaryPickupZone = stopRows[0].zone;
+
+            stopRows.forEach((stop, idx) => {
+                totalItemPrice += (parseInt(stop.estPrice) || 0);
+                if (idx > 0) {
+                    if (stop.zone === primaryPickupZone) {
+                        extraStopFee += EXTRA_STOP_SAME_ZONE;
+                        sameZoneCount++;
+                    } else {
+                        extraStopFee += EXTRA_STOP_DIFF_ZONE;
+                        diffZoneCount++;
+                    }
+                }
+            });
+
+            const totalOngkir = baseOngkir + extraStopFee;
+            const grandTotal = totalItemPrice + totalOngkir + FEE_MIDMAN;
+
+            return {
+                deliveryZone,
+                baseOngkir,
+                totalItemPrice,
+                extraStopFee,
+                sameZoneCount,
+                diffZoneCount,
+                totalOngkir,
+                grandTotal
+            };
+        }
+
+        function onVillageChange() {
+            const val = document.getElementById('input-village').value;
+            const [villageName, zone] = val.split('|');
+            document.getElementById('input-delivery-zone').value = zone;
+            const headerLoc = document.getElementById('header-active-location');
+            if (headerLoc) {
+                headerLoc.innerHTML = `${villageName} (${ZONES[zone].name.split(' • ')[0]}) <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>`;
+            }
+            recalculatePricing();
+        }
+
+        // Rumus Haversine untuk menghitung jarak (km) dari pusat kota Jombang
+        function getDistanceKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return (R * c) * 1.25; // Faktor kelokan jalan dalam kota (+25%)
+        }
+
+        function detectCustomerGPS() {
+            const btn = document.getElementById('btn-detect-gps');
+            const badge = document.getElementById('customer-gps-badge');
+            const info = document.getElementById('customer-gps-info');
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mencari GPS...';
+
+            const applyCoordinates = (lat, lng, isSimulated = false) => {
+                const estKm = getDistanceKm(JOMBANG_CENTER.lat, JOMBANG_CENTER.lng, lat, lng);
+                let detectedZone = 'ZONA_1';
+                if (estKm > 8) detectedZone = 'ZONA_3';
+                else if (estKm > 4) detectedZone = 'ZONA_2';
+
+                customerGPS = {
+                    lat: lat.toFixed(5),
+                    lng: lng.toFixed(5),
+                    estKm: estKm.toFixed(1),
+                    detectedZone
+                };
+
+                document.getElementById('input-delivery-zone').value = detectedZone;
+                recalculatePricing();
+
+                badge.classList.remove('hidden');
+                info.innerHTML = `Titik GPS: <strong>${customerGPS.lat}, ${customerGPS.lng}</strong> (±${customerGPS.estKm} km • ${ZONES[detectedZone].name})${isSimulated ? ' [Simulasi]' : ''}`;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> GPS Terkunci';
+                showToast(`Lokasi GPS terkunci! Estimasi jarak ±${customerGPS.estKm} km (${ZONES[detectedZone].name}).`, 'success');
+            };
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => applyCoordinates(pos.coords.latitude, pos.coords.longitude, false),
+                    () => {
+                        // Simulasi titik koordinat area Jombang jika izin GPS diblokir browser
+                        applyCoordinates(-7.5685, 112.2480, true);
+                    },
+                    { timeout: 4000 }
+                );
+            } else {
+                applyCoordinates(-7.5685, 112.2480, true);
+            }
+        }
+
+        function clearCustomerGPS() {
+            customerGPS = null;
+            document.getElementById('customer-gps-badge').classList.add('hidden');
+            document.getElementById('btn-detect-gps').innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Pin Lokasi GPS Saya';
+            onVillageChange();
+        }
+
+        function recalculatePricing() {
+            const calc = calculatePricingBreakdown();
+
+            document.getElementById('calc-stop-count').textContent = stopRows.length;
+            document.getElementById('calc-item-price').textContent = formatRupiah(calc.totalItemPrice);
+            document.getElementById('calc-base-ongkir-label').textContent = `Ongkir Utama (${ZONES[calc.deliveryZone].name.split(' • ')[0]}):`;
+            document.getElementById('calc-base-ongkir').textContent = formatRupiah(calc.baseOngkir);
+
+            const extraRow = document.getElementById('calc-extra-stop-row');
+            if (stopRows.length > 1) {
+                extraRow.classList.remove('hidden');
+                document.getElementById('calc-extra-stop-label').textContent = `Tambahan ${stopRows.length - 1} Titik (${calc.sameZoneCount} 1-area, ${calc.diffZoneCount} beda-area):`;
+                document.getElementById('calc-extra-stop-fee').textContent = '+' + formatRupiah(calc.extraStopFee);
+            } else {
+                extraRow.classList.add('hidden');
+            }
+
+            document.getElementById('calc-total').textContent = formatRupiah(calc.grandTotal);
+
+            // Sinkronkan Floating Checkout Bar ala GoFood
+            const floatCount = document.getElementById('float-cart-count');
+            const floatTitle = document.getElementById('float-cart-title');
+            const floatSub = document.getElementById('float-cart-subtitle');
+            const floatTotal = document.getElementById('float-cart-total');
+            if (floatCount && floatTotal) {
+                floatCount.textContent = stopRows.length;
+                floatTitle.textContent = `Keranjang Titipan • ${stopRows.length} Lokasi Toko`;
+                const filledStores = stopRows.filter(s => s.storeName.trim()).map(s => s.storeName.trim());
+                floatSub.textContent = filledStores.length > 0 ? filledStores.join(' + ') : 'Ketuk untuk isi detail titipan & bayar';
+                floatTotal.textContent = formatRupiah(calc.grandTotal);
+            }
+        }
+
+        function resetUmkmPhotoInput() {
+            pendingUmkmPhotoUrl = null;
+            const previewEl = document.getElementById('umkm-photo-preview');
+            const labelEl = document.getElementById('umkm-photo-label');
+            if (previewEl) {
+                previewEl.src = '';
+                previewEl.classList.add('hidden');
+            }
+            if (labelEl) {
+                labelEl.textContent = 'Pilih Foto Menu / Produk...';
+            }
+        }
+
+        function addUmkmProductToCart(storeId, productId) {
+            const store = umkmStores.find(s => s.id === storeId);
+            if (!store) return;
+            const product = store.products.find(p => p.id === productId);
+            if (!product) return;
+
+            // Cek apakah baris pertama masih kosong
+            const firstRow = stopRows[0];
+            if (stopRows.length === 1 && !firstRow.storeName.trim() && !firstRow.items.trim()) {
+                firstRow.storeName = store.name;
+                firstRow.zone = store.zone;
+                firstRow.items = `1x ${product.name}`;
+                firstRow.estPrice = product.price;
+            } else {
+                // Cek apakah toko yang sama sudah ada di daftar titik belanja
+                const existingStop = stopRows.find(r => r.storeName.toLowerCase() === store.name.toLowerCase());
+                if (existingStop) {
+                    existingStop.items = existingStop.items ? `${existingStop.items}, 1x ${product.name}` : `1x ${product.name}`;
+                    existingStop.estPrice = (parseInt(existingStop.estPrice) || 0) + product.price;
+                } else {
+                    stopRows.push({
+                        id: nextStopId++,
+                        storeName: store.name,
+                        zone: store.zone,
+                        items: `1x ${product.name}`,
+                        estPrice: product.price
+                    });
+                }
+            }
+
+            renderStopRows();
+            showToast(`"${product.name}" dari ${store.name} masuk ke keranjang titipan!`, 'success');
+        }
+
+        function previewUmkmProductPhoto(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                pendingUmkmPhotoUrl = e.target.result;
+                const previewEl = document.getElementById('umkm-photo-preview');
+                const labelEl = document.getElementById('umkm-photo-label');
+                if (previewEl) {
+                    previewEl.src = pendingUmkmPhotoUrl;
+                    previewEl.classList.remove('hidden');
+                }
+                if (labelEl) {
+                    labelEl.textContent = file.name.slice(0, 22) + (file.name.length > 22 ? '...' : '');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function registerUmkmStore(e) {
+            e.preventDefault();
+            const name = document.getElementById('umkm-store-name').value.trim();
+            const category = document.getElementById('umkm-store-category').value;
+            const zone = document.getElementById('umkm-store-zone').value;
+            const address = document.getElementById('umkm-store-address').value.trim();
+
+            const newStore = {
+                id: 'UMKM-' + (umkmStores.length + 1) + '-' + Math.floor(Math.random() * 90 + 10),
+                name,
+                category,
+                zone,
+                address,
+                products: []
+            };
+
+            umkmStores.unshift(newStore);
+            e.target.reset();
+            renderAll();
+            showToast(`Toko "${name}" berhasil terdaftar! Silakan tambahkan produknya.`, 'success');
+        }
+
+        function addUmkmProduct(e) {
+            e.preventDefault();
+            const storeId = document.getElementById('umkm-select-store').value;
+            const name = document.getElementById('umkm-product-name').value.trim();
+            const price = parseInt(document.getElementById('umkm-product-price').value) || 0;
+            const note = document.getElementById('umkm-product-note').value.trim();
+
+            const store = umkmStores.find(s => s.id === storeId);
+            if (!store) return;
+
+            const fallbackPhoto = `https://placehold.co/300x300/10b981/ffffff?text=${encodeURIComponent(name.slice(0, 18))}`;
+
+            store.products.push({
+                id: 'PRD-' + Date.now(),
+                name,
+                price,
+                note: note || 'Tersedia siap titip',
+                photo: pendingUmkmPhotoUrl || fallbackPhoto
+            });
+
+            e.target.reset();
+            resetUmkmPhotoInput();
+            renderAll();
+            showToast(`Produk "${name}" ditambahkan ke etalase ${store.name}!`, 'success');
+        }
+
+        function renderUmkmSection() {
+            const totalProducts = umkmStores.reduce((acc, s) => acc + s.products.length, 0);
+            const badgeUmkm = document.getElementById('badge-umkm-count');
+            if (badgeUmkm) badgeUmkm.textContent = umkmStores.length;
+
+            const summaryEl = document.getElementById('umkm-total-summary');
+            if (summaryEl) summaryEl.textContent = `${umkmStores.length} toko • ${totalProducts} produk`;
+
+            // 1. Update dropdown pilih toko di form tambah produk
+            const selectStore = document.getElementById('umkm-select-store');
+            if (selectStore) {
+                const prevVal = selectStore.value;
+                selectStore.innerHTML = umkmStores.map(s => `<option value="${s.id}">${s.name} (${ZONES[s.zone].name.split(' • ')[0]})</option>`).join('');
+                if (prevVal && umkmStores.some(s => s.id === prevVal)) {
+                    selectStore.value = prevVal;
+                }
+            }
+
+            // 2. Render Etalase di Halaman Penitip (Tampilan Kartu Menu Visual ala GoFood)
+            const showcaseEl = document.getElementById('penitip-umkm-showcase');
+            const searchQuery = (document.getElementById('umkm-search-input')?.value || '').trim().toLowerCase();
+
+            if (showcaseEl) {
+                const filteredStores = umkmStores
+                    .filter(s => selectedUmkmCategory === 'ALL' || s.category === selectedUmkmCategory)
+                    .map(s => {
+                        if (!searchQuery) return s;
+                        const matchStore = s.name.toLowerCase().includes(searchQuery) || s.address.toLowerCase().includes(searchQuery);
+                        const matchingProducts = s.products.filter(p => p.name.toLowerCase().includes(searchQuery) || p.note.toLowerCase().includes(searchQuery));
+                        if (matchStore) return s;
+                        if (matchingProducts.length > 0) return { ...s, products: matchingProducts };
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (filteredStores.length === 0) {
+                    showcaseEl.innerHTML = `
+                        <div class="bg-white rounded-3xl border border-slate-200 p-6 text-center space-y-2">
+                            <i class="fa-solid fa-magnifying-glass text-2xl text-slate-300"></i>
+                            <p class="text-xs font-bold text-slate-700">Menu atau toko tidak ditemukan</p>
+                            <p class="text-[11px] text-slate-500">Anda tetap bisa menitip barang apa saja lewat formulir <strong>Titip Toko Bebas</strong> di bawah!</p>
+                        </div>
+                    `;
+                } else {
+                    showcaseEl.innerHTML = filteredStores.map(store => `
+                        <div class="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-3.5">
+                            <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700">${store.category}</span>
+                                        <span class="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><i class="fa-solid fa-star"></i> 4.9 • Mitra Terverifikasi</span>
+                                    </div>
+                                    <h4 class="font-extrabold text-base text-slate-900 mt-1 truncate">${store.name}</h4>
+                                    <p class="text-[11px] text-slate-500 truncate"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${store.address}</p>
+                                </div>
+                                <span class="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700">
+                                    ${ZONES[store.zone].name.split(' • ')[0]}
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                                ${store.products.length === 0 ? `
+                                    <p class="col-span-full text-xs text-slate-400 italic py-2">Belum ada produk yang ditambahkan toko ini.</p>
+                                ` : store.products.map(prd => `
+                                    <div class="rounded-2xl border border-slate-200/90 bg-slate-50/40 overflow-hidden flex flex-col justify-between group hover:border-emerald-400 transition">
+                                        <div>
+                                            <div class="relative aspect-square bg-slate-200 overflow-hidden">
+                                                <img src="${prd.photo}" onerror="this.src='https://placehold.co/300x300/e2e8f0/475569?text=Produk'" alt="${prd.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                                <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-lg bg-slate-900/75 backdrop-blur-sm text-white text-[10px] font-extrabold">
+                                                    ${formatRupiah(prd.price)}
+                                                </span>
+                                            </div>
+                                            <div class="p-2.5">
+                                                <p class="text-xs font-extrabold text-slate-900 line-clamp-1">${prd.name}</p>
+                                                <p class="text-[10px] text-slate-500 line-clamp-1 mt-0.5">${prd.note}</p>
+                                            </div>
+                                        </div>
+                                        <div class="px-2.5 pb-2.5">
+                                            <button type="button" onclick="addUmkmProductToCart('${store.id}', '${prd.id}')" class="w-full py-1.5 px-2.5 rounded-xl bg-white hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-500 text-[11px] font-extrabold transition flex items-center justify-center gap-1 shadow-xs">
+                                                <i class="fa-solid fa-plus"></i> Tambah
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // 3. Render Daftar Toko & Produk di Tab 4 (Mitra Toko UMKM)
+            const registeredListEl = document.getElementById('umkm-registered-list');
+            if (registeredListEl) {
+                registeredListEl.innerHTML = umkmStores.map(store => `
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="font-bold text-base text-slate-900">${store.name}</h4>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">${store.category}</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-map-pin text-rose-500 mr-1"></i>${store.address} • <strong>${ZONES[store.zone].name}</strong></p>
+                            </div>
+                            <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl self-start sm:self-auto">${store.products.length} Produk</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            ${store.products.length === 0 ? `
+                                <div class="col-span-2 text-center py-4 text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                    Toko ini belum memiliki produk. Gunakan formulir di samping untuk menambahkan produk pertama.
+                                </div>
+                            ` : store.products.map(prd => `
+                                <div class="p-3 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-center justify-between gap-2.5">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <img src="${prd.photo}" onerror="this.src='https://placehold.co/150x150/e2e8f0/475569?text=Produk'" alt="${prd.name}" class="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0">
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-bold text-slate-900 truncate">${prd.name}</p>
+                                            <p class="text-[11px] text-slate-500 truncate">${prd.note}</p>
+                                            <p class="text-xs font-extrabold text-emerald-600 mt-0.5">${formatRupiah(prd.price)}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg shrink-0">Aktif</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // =====================================================================
+        // TRANSAKSI PESANAN, PEMBAYARAN MIDMAN & KAMERA TIMESTAMP GPS
+        // =====================================================================
+        function createOrder(e) {
+            e.preventDefault();
+            const calc = calculatePricingBreakdown();
+            const paymentMethod = document.getElementById('input-payment-method').value;
+            const [villageName] = document.getElementById('input-village').value.split('|');
+            const sharelocLink = document.getElementById('input-shareloc-link').value.trim();
+            const newId = 'JBG-' + (101 + orders.length);
+
+            const newOrder = {
+                id: newId,
+                customerName: document.getElementById('input-name').value.trim(),
+                wa: document.getElementById('input-wa').value.trim(),
+                stops: JSON.parse(JSON.stringify(stopRows)),
+                village: villageName,
+                deliveryZone: calc.deliveryZone,
+                address: document.getElementById('input-address').value.trim(),
+                sharelocLink: sharelocLink || null,
+                customerCoords: customerGPS ? { ...customerGPS } : null,
+                itemPrice: calc.totalItemPrice,
+                baseOngkir: calc.baseOngkir,
+                extraStopFee: calc.extraStopFee,
+                ongkir: calc.totalOngkir,
+                fee: FEE_MIDMAN,
+                totalPrice: calc.grandTotal,
+                paymentMethod: paymentMethod,
+                status: paymentMethod === 'CASH_PICKUP' ? 'MENUNGGU_JEMPUT_TUNAI' : 'MENUNGGU_BAYAR',
+                escrowStatus: 'PENDING',
+                paymentProofNote: paymentMethod === 'CASH_PICKUP' ? 'Tunai — Kurir menjemput uang ke lokasi penitip' : null,
+                pickupTime: null,
+                deliveryPhoto: null,
+                deliveryTimestamp: null,
+                deliveryLocation: null,
+                createdAt: 'Baru saja'
+            };
+
+            orders.unshift(newOrder);
+            document.getElementById('order-form').reset();
+            clearCustomerGPS();
+            stopRows = [{ id: 1, storeName: '', zone: 'ZONA_1', items: '', estPrice: 25000 }];
+            nextStopId = 2;
+            renderStopRows();
+            renderAll();
+
+            if (paymentMethod === 'CASH_PICKUP') {
+                showToast(`Pesanan ${newId} dibuat! Kurir akan menjemput uang tunai ke lokasi Anda terlebih dahulu.`, 'info');
+            } else {
+                showToast(`Pesanan ${newId} dibuat! Silakan selesaikan pembayaran Midman.`, 'success');
+                openPaymentModal(newId);
+            }
+        }
+
+        function openPaymentModal(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            activePaymentOrderId = orderId;
+            document.getElementById('pay-modal-title').textContent = `Order #${order.id} • ${formatRupiah(order.totalPrice)}`;
+
+            const body = document.getElementById('pay-modal-body');
+            body.innerHTML = `
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center space-y-2">
+                    <p class="text-xs font-semibold text-slate-600">Rekening Penampung Midman Jastip Jombang</p>
+                    <p class="text-xl font-extrabold text-emerald-600">${formatRupiah(order.totalPrice)}</p>
+                    <div class="inline-block bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
+                        <i class="fa-solid fa-qrcode text-6xl text-slate-800"></i>
+                        <p class="text-[10px] font-bold text-slate-500 mt-1">QRIS / BCA 123-456-7890 a.n Midman Jombang</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Nama Pengirim Transfer</label>
+                    <input type="text" id="pay-proof-note" value="Transfer ${order.paymentMethod} a.n ${order.customerName} (${formatRupiah(order.totalPrice)})" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <button type="button" onclick="confirmPenitipPayment()" class="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg transition">
+                    Saya Sudah Bayar • Kirim ke Admin Midman
+                </button>
+            `;
+            document.getElementById('payment-modal').classList.remove('hidden');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').classList.add('hidden');
+            activePaymentOrderId = null;
+        }
+
+        function confirmPenitipPayment() {
+            const order = orders.find(o => o.id === activePaymentOrderId);
+            if (!order) return;
+            order.paymentProofNote = document.getElementById('pay-proof-note').value.trim();
+            order.status = 'MENUNGGU_VERIFIKASI_ADMIN';
+            closePaymentModal();
+            renderAll();
+            showToast(`Bukti pembayaran #${order.id} terkirim! Menunggu validasi Admin Midman.`, 'success');
+        }
+
+        function adminApprovePayment(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            order.escrowStatus = 'HELD';
+            order.status = 'DANA_DITAHAN_SIAP_BELANJA';
+            renderAll();
+            showToast(`Dana #${order.id} dikunci aman (HELD). Kurir siap membelikan pesanan!`, 'success');
+        }
+
+        function kurirConfirmCashCollected(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            order.escrowStatus = 'HELD';
+            order.status = 'DANA_DITAHAN_SIAP_BELANJA';
+            renderAll();
+            showToast(`Uang tunai #${order.id} diterima! Silakan menuju titik belanja.`, 'success');
+        }
+
+        function kurirConfirmPickedUp(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            order.pickupTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+            order.status = 'SEDANG_DIANTAR';
+            renderAll();
+            showToast(`Status #${order.id} diperbarui: Barang sudah dibeli & sedang diantar!`, 'info');
+        }
+
+        function openCameraModal(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            activeCameraOrderId = orderId;
+            capturedDataUrl = null;
+
+            document.getElementById('cam-modal-title').textContent = `Bukti Serah-Terima #${order.id} (${order.customerName})`;
+            document.getElementById('cam-controls-capture').classList.remove('hidden');
+            document.getElementById('cam-controls-confirm').classList.add('hidden');
+            document.getElementById('camera-modal').classList.remove('hidden');
+
+            const updateOverlayClock = () => {
+                const now = new Date();
+                const timeStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' +
+                                now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+                document.getElementById('overlay-time').textContent = timeStr;
+                document.getElementById('overlay-gps').textContent = `LAT ${currentCoords.lat}, LNG ${currentCoords.lng}`;
+                document.getElementById('overlay-address').textContent = `${order.address}, ${order.village}, Jombang`;
+            };
+            updateOverlayClock();
+            if (clockInterval) clearInterval(clockInterval);
+            clockInterval = setInterval(updateOverlayClock, 1000);
+
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(stream => {
+                        videoStream = stream;
+                        video.srcObject = stream;
+                        video.classList.remove('hidden');
+                        canvas.classList.add('hidden');
+                    })
+                    .catch(() => {
+                        renderSimulatedCameraFrame(canvas, order);
+                    });
+            } else {
+                renderSimulatedCameraFrame(canvas, order);
+            }
+        }
+
+        function renderSimulatedCameraFrame(canvas, order) {
+            const video = document.getElementById('camera-video');
+            video.classList.add('hidden');
+            canvas.classList.remove('hidden');
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 640, 480);
+            grad.addColorStop(0, '#1e293b');
+            grad.addColorStop(1, '#064e3b');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 640, 480);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.beginPath();
+            ctx.arc(320, 200, 75, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 22px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`PAKET JASTIP #${order.id}`, 320, 200);
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillStyle = '#a7f3d0';
+            ctx.fillText(`Penerima: ${order.customerName} • ${order.village}`, 320, 228);
+        }
+
+        function captureTimestampPhoto() {
+            const order = orders.find(o => o.id === activeCameraOrderId);
+            if (!order) return;
+
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+
+            if (!video.classList.contains('hidden') && video.readyState >= 2) {
+                ctx.drawImage(video, 0, 0, 640, 480);
+            } else {
+                renderSimulatedCameraFrame(canvas, order);
+            }
+
+            // Cetak watermark timestamp & GPS langsung ke atas foto
+            const now = new Date();
+            const timeStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' +
+                            now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+            ctx.fillRect(0, 360, 640, 120);
+
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#34d399';
+            ctx.font = 'bold 14px Inter, sans-serif';
+            ctx.fillText('JASTIP JOMBANG VERIFIED PROOF', 20, 388);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 16px monospace';
+            ctx.fillText(timeStr, 20, 414);
+
+            ctx.fillStyle = '#7dd3fc';
+            ctx.font = '13px monospace';
+            ctx.fillText(`GPS: ${currentCoords.lat}, ${currentCoords.lng}`, 20, 438);
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '13px Inter, sans-serif';
+            ctx.fillText(`${order.address}, ${order.village}, Jombang`, 20, 460);
+
+            capturedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            video.classList.add('hidden');
+            canvas.classList.remove('hidden');
+
+            document.getElementById('cam-controls-capture').classList.add('hidden');
+            document.getElementById('cam-controls-confirm').classList.remove('hidden');
+            showToast('Foto ber-watermark waktu & GPS berhasil dijepret!', 'success');
+        }
+
+        function retakePhoto() {
+            if (!activeCameraOrderId) return;
+            openCameraModal(activeCameraOrderId);
+        }
+
+        function submitDeliveryProof() {
+            const order = orders.find(o => o.id === activeCameraOrderId);
+            if (!order || !capturedDataUrl) return;
+
+            order.deliveryPhoto = capturedDataUrl;
+            order.deliveryTimestamp = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+            order.deliveryLocation = `${currentCoords.lat}, ${currentCoords.lng}`;
+            order.status = 'MENUNGGU_KONFIRMASI_PENITIP';
+
+            closeCameraModal();
+            renderAll();
+            showToast(`Bukti foto #${order.id} terkirim! Menunggu konfirmasi diterima oleh penitip.`, 'success');
+        }
+
+        function closeCameraModal() {
+            if (clockInterval) clearInterval(clockInterval);
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            document.getElementById('camera-modal').classList.add('hidden');
+            activeCameraOrderId = null;
+        }
+
+        function penitipConfirmReceived(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+            order.status = 'SELESAI';
+            order.escrowStatus = 'RELEASED';
+            renderAll();
+            showToast(`Terima kasih! Pesanan #${order.id} selesai & dana resmi dicairkan (RELEASED).`, 'success');
+        }
+
+        // =====================================================================
+        // RENDER FUNCTIONS FOR ALL VIEWS
+        // =====================================================================
+        function getStatusBadge(status) {
+            const map = {
+                'MENUNGGU_BAYAR': { text: 'Menunggu Pembayaran', cls: 'bg-amber-100 text-amber-800 border-amber-200' },
+                'MENUNGGU_VERIFIKASI_ADMIN': { text: 'Cek Mutasi Admin', cls: 'bg-purple-100 text-purple-800 border-purple-200' },
+                'MENUNGGU_JEMPUT_TUNAI': { text: 'Jemput Uang Tunai', cls: 'bg-amber-100 text-amber-800 border-amber-200' },
+                'DANA_DITAHAN_SIAP_BELANJA': { text: 'Dana Aman (HELD) • Sedang Dibelikan', cls: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+                'SEDANG_DIANTAR': { text: 'Barang Diambil • Menuju Lokasi', cls: 'bg-sky-100 text-sky-800 border-sky-200' },
+                'MENUNGGU_KONFIRMASI_PENITIP': { text: 'Tiba • Menunggu Konfirmasi Penitip', cls: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+                'SELESAI': { text: 'Selesai • Dana Cair (RELEASED)', cls: 'bg-slate-800 text-emerald-400 border-slate-700' }
+            };
+            const item = map[status] || { text: status, cls: 'bg-slate-100 text-slate-700' };
+            return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border ${item.cls}">${item.text}</span>`;
+        }
+
+        function renderStopsSummaryHtml(stops) {
+            return `
+                <div class="space-y-1.5 mt-2">
+                    ${stops.map((s, idx) => `
+                        <div class="flex items-start justify-between gap-2 text-xs bg-slate-50 px-3 py-2 rounded-xl border border-slate-200/70">
+                            <div>
+                                <span class="font-bold text-slate-800">${idx + 1}. ${s.storeName}</span>
+                                <span class="text-[10px] text-slate-500 ml-1">(${ZONES[s.zone].name.split(' • ')[0]})</span>
+                                <p class="text-slate-600 mt-0.5">${s.items}</p>
+                            </div>
+                            <span class="font-semibold text-slate-700 shrink-0">${formatRupiah(s.estPrice)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderAll() {
+            updateBadges();
+            renderUmkmSection();
+            renderPenitipOrders();
+            renderAdminOrders();
+            renderKurirOrders();
+        }
+
+        function updateBadges() {
+            const adminPendingCount = orders.filter(o => o.status === 'MENUNGGU_VERIFIKASI_ADMIN').length;
+            const badgeAdmin = document.getElementById('badge-admin-pending');
+            const mobBadgeAdmin = document.getElementById('mob-badge-admin');
+            if (adminPendingCount > 0) {
+                if (badgeAdmin) {
+                    badgeAdmin.textContent = adminPendingCount;
+                    badgeAdmin.classList.remove('hidden');
+                }
+                if (mobBadgeAdmin) {
+                    mobBadgeAdmin.textContent = adminPendingCount;
+                    mobBadgeAdmin.classList.remove('hidden');
+                }
+            } else {
+                if (badgeAdmin) badgeAdmin.classList.add('hidden');
+                if (mobBadgeAdmin) mobBadgeAdmin.classList.add('hidden');
+            }
+
+            const kurirActiveCount = orders.filter(o => ['MENUNGGU_JEMPUT_TUNAI', 'DANA_DITAHAN_SIAP_BELANJA', 'SEDANG_DIANTAR'].includes(o.status)).length;
+            const badgeKurir = document.getElementById('badge-kurir-active');
+            const mobBadgeKurir = document.getElementById('mob-badge-kurir');
+            if (kurirActiveCount > 0) {
+                if (badgeKurir) {
+                    badgeKurir.textContent = kurirActiveCount;
+                    badgeKurir.classList.remove('hidden');
+                }
+                if (mobBadgeKurir) {
+                    mobBadgeKurir.textContent = kurirActiveCount;
+                    mobBadgeKurir.classList.remove('hidden');
+                }
+            } else {
+                if (badgeKurir) badgeKurir.classList.add('hidden');
+                if (mobBadgeKurir) mobBadgeKurir.classList.add('hidden');
+            }
+        }
+
+        function renderPenitipOrders() {
+            const container = document.getElementById('penitip-orders-list');
+            container.innerHTML = orders.map(order => `
+                <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-sm text-slate-900">#${order.id}</span>
+                            <span class="text-xs text-slate-400">• ${order.createdAt}</span>
+                        </div>
+                        ${getStatusBadge(order.status)}
+                    </div>
+
+                    ${renderStopsSummaryHtml(order.stops)}
+
+                    <div class="text-xs text-slate-500 flex items-center justify-between gap-1.5 pt-1">
+                        <div>
+                            <i class="fa-solid fa-location-dot text-emerald-600 mr-1"></i>
+                            <span>Antar ke <strong>${order.village}</strong>: ${order.address}</span>
+                        </div>
+                        ${order.customerCoords ? `<span class="text-[10px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full shrink-0">GPS ±${order.customerCoords.estKm} km</span>` : ''}
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                        <div>
+                            <span class="text-slate-500">Total Midman (Ongkir ${formatRupiah(order.ongkir)}):</span>
+                            <strong class="text-slate-900 ml-1">${formatRupiah(order.totalPrice)}</strong>
+                        </div>
+                        <span class="font-semibold px-2 py-0.5 rounded-lg ${order.escrowStatus === 'HELD' ? 'bg-emerald-50 text-emerald-700' : order.escrowStatus === 'RELEASED' ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-600'}">
+                            Escrow: ${order.escrowStatus}
+                        </span>
+                    </div>
+
+                    ${order.deliveryPhoto ? `
+                        <div class="bg-slate-900 rounded-2xl p-3 text-white space-y-2">
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="text-emerald-400 font-bold"><i class="fa-solid fa-camera-retro mr-1"></i> Bukti Foto Serah-Terima & GPS Kurir</span>
+                                <span class="text-slate-400">${order.deliveryTimestamp}</span>
+                            </div>
+                            <img src="${order.deliveryPhoto}" alt="Bukti Serah Terima" class="w-full rounded-xl border border-slate-700">
+                        </div>
+                    ` : ''}
+
+                    ${order.status === 'MENUNGGU_BAYAR' ? `
+                        <button onclick="openPaymentModal('${order.id}')" class="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition">
+                            Bayar Sekarang ke Midman (${formatRupiah(order.totalPrice)})
+                        </button>
+                    ` : ''}
+
+                    ${order.status === 'MENUNGGU_KONFIRMASI_PENITIP' ? `
+                        <button onclick="penitipConfirmReceived('${order.id}')" class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Konfirmasi Barang Diterima & Cairkan Dana</span>
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderAdminOrders() {
+            let pendingTotal = 0, heldTotal = 0, releasedTotal = 0;
+            orders.forEach(o => {
+                if (o.status === 'MENUNGGU_VERIFIKASI_ADMIN') pendingTotal += o.totalPrice;
+                if (o.escrowStatus === 'HELD') heldTotal += o.totalPrice;
+                if (o.escrowStatus === 'RELEASED') releasedTotal += o.totalPrice;
+            });
+
+            document.getElementById('stat-pending-amount').textContent = formatRupiah(pendingTotal);
+            document.getElementById('stat-held-amount').textContent = formatRupiah(heldTotal);
+            document.getElementById('stat-released-amount').textContent = formatRupiah(releasedTotal);
+
+            const container = document.getElementById('admin-orders-list');
+            container.innerHTML = orders.map(order => `
+                <div class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/70 transition">
+                    <div class="space-y-1.5 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-extrabold text-sm text-slate-900">#${order.id}</span>
+                            <span class="text-xs font-semibold text-slate-700">${order.customerName} (${order.wa})</span>
+                            ${getStatusBadge(order.status)}
+                        </div>
+                        <p class="text-xs text-slate-600">
+                            <strong>${order.stops.length} Titik Belanja:</strong> ${order.stops.map(s => `${s.storeName} (${s.items})`).join(' + ')}
+                        </p>
+                        <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+                            <span>Metode: <strong class="text-slate-700">${order.paymentMethod}</strong></span>
+                            <span>Ongkir: <strong class="text-slate-700">${formatRupiah(order.ongkir)}</strong></span>
+                            <span>Total Dana: <strong class="text-emerald-600">${formatRupiah(order.totalPrice)}</strong></span>
+                            ${order.paymentProofNote ? `<span class="text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md"><i class="fa-solid fa-receipt mr-1"></i>${order.paymentProofNote}</span>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        ${order.status === 'MENUNGGU_VERIFIKASI_ADMIN' ? `
+                            <button onclick="adminApprovePayment('${order.id}')" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-lock"></i>
+                                <span>Validasi Dana Masuk (Kunci HELD)</span>
+                            </button>
+                        ` : order.escrowStatus === 'HELD' ? `
+                            <span class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
+                                <i class="fa-solid fa-shield-halved mr-1"></i> Dana Terkunci Aman
+                            </span>
+                        ` : order.escrowStatus === 'RELEASED' ? `
+                            <span class="px-3 py-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-xs font-bold">
+                                <i class="fa-solid fa-check-double mr-1"></i> Pencairan Selesai
+                            </span>
+                        ` : `
+                            <span class="text-xs text-slate-400 italic">Menunggu pembayaran penitip</span>
+                        `}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderKurirOrders() {
+            const container = document.getElementById('kurir-orders-list');
+            const activeTasks = orders.filter(o => o.status !== 'MENUNGGU_BAYAR' && o.status !== 'MENUNGGU_VERIFIKASI_ADMIN');
+
+            if (activeTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-3xl p-8 border border-slate-200 text-center space-y-2">
+                        <i class="fa-solid fa-mug-hot text-3xl text-slate-300"></i>
+                        <p class="font-bold text-slate-700 text-sm">Belum ada tugas pengantaran siap jalan</p>
+                        <p class="text-xs text-slate-500">Order akan muncul di sini setelah pembayaran divalidasi oleh Admin Midman.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = activeTasks.map(order => {
+                const mapsDirectUrl = order.customerCoords
+                    ? `https://www.google.com/maps?q=${order.customerCoords.lat},${order.customerCoords.lng}`
+                    : (order.sharelocLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.village + ' ' + order.address + ' Jombang')}`);
+
+                const copyPayload = order.customerCoords
+                    ? `${order.customerCoords.lat}, ${order.customerCoords.lng}`
+                    : (order.sharelocLink || `${order.address}, ${order.village}, Jombang`);
+
+                const copyBtnText = order.customerCoords
+                    ? 'Salin Koordinat'
+                    : (order.sharelocLink ? 'Salin Link' : 'Salin Alamat');
+
+                return `
+                    <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <span class="font-extrabold text-base text-slate-900">#${order.id} • ${order.customerName}</span>
+                                <span class="ml-2 text-xs text-slate-500"><i class="fa-brands fa-whatsapp text-emerald-500"></i> ${order.wa}</span>
+                            </div>
+                            ${getStatusBadge(order.status)}
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70 space-y-2">
+                                <span class="text-[10px] font-bold uppercase text-slate-400">Rute Titik Belanja (${order.stops.length} Lokasi)</span>
+                                ${order.stops.map((s, i) => `
+                                    <div class="border-b last:border-b-0 border-slate-200/70 pb-1.5 last:pb-0">
+                                        <p class="font-bold text-slate-800">${i + 1}. ${s.storeName} <span class="text-[10px] font-normal text-slate-500">(${ZONES[s.zone].name.split(' • ')[0]})</span></p>
+                                        <p class="text-slate-600">${s.items} — <strong>${formatRupiah(s.estPrice)}</strong></p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70 space-y-2 flex flex-col justify-between">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase text-slate-400">Titik Antar Penitip • ${order.village}</span>
+                                    <p class="font-bold text-slate-800 mt-1">${order.address}</p>
+                                    <p class="text-emerald-600 font-semibold mt-1">Total Ongkir Kurir: ${formatRupiah(order.ongkir)}</p>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 pt-1">
+                                    <a href="${mapsDirectUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-[11px] transition shadow-sm">
+                                        <i class="fa-solid fa-diamond-turn-right"></i>
+                                        <span>Direct GPS${order.customerCoords ? ` (±${order.customerCoords.estKm} km)` : ''}</span>
+                                    </a>
+                                    <button type="button" onclick="copyTextFallback('${copyPayload.replace(/'/g, "\\'")}', '${copyBtnText}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-[11px] transition">
+                                        <i class="fa-regular fa-copy"></i>
+                                        <span>${copyBtnText}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tombol Aksi Kurir Berdasarkan Status -->
+                        ${order.status === 'MENUNGGU_JEMPUT_TUNAI' ? `
+                            <button onclick="kurirConfirmCashCollected('${order.id}')" class="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                                <span>Konfirmasi Uang Tunai (${formatRupiah(order.totalPrice)}) Sudah Diterima</span>
+                            </button>
+                        ` : ''}
+
+                        ${order.status === 'DANA_DITAHAN_SIAP_BELANJA' ? `
+                            <button onclick="kurirConfirmPickedUp('${order.id}')" class="w-full py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                                <span>Konfirmasi Order Sudah Dibeli / Diambil dari Toko</span>
+                            </button>
+                        ` : ''}
+
+                        ${order.status === 'SEDANG_DIANTAR' ? `
+                            <button onclick="openCameraModal('${order.id}')" class="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-camera"></i>
+                                <span>Buka Kamera Timestamp & Serahkan ke Penitip</span>
+                            </button>
+                        ` : ''}
+
+                        ${order.status === 'MENUNGGU_KONFIRMASI_PENITIP' || order.status === 'SELESAI' ? `
+                            <div class="flex items-center justify-between text-xs bg-emerald-50 text-emerald-800 px-4 py-2.5 rounded-xl border border-emerald-200">
+                                <span><i class="fa-solid fa-check-circle mr-1.5"></i> Bukti foto ber-timestamp & GPS telah dikirim (${order.deliveryTimestamp})</span>
+                                <span class="font-bold">${order.escrowStatus === 'RELEASED' ? 'Dana Cair!' : 'Menunggu Penitip'}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Inisialisasi aplikasi saat halaman dimuat
+        window.onload = function() {
+            initPwaCapabilities();
+            renderStopRows();
+            renderAll();
+        };
+    </script>
+</body>
+</html>
