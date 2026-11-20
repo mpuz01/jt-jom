@@ -90,16 +90,12 @@
                 <button onclick="switchRole('penitip')" id="tab-penitip" class="role-btn flex-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-white text-emerald-800 shadow">
                     <i class="fa-solid fa-house"></i> <span>1. Beranda Penitip</span>
                 </button>
-                <button onclick="switchRole('admin')" id="tab-admin" class="role-btn flex-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-emerald-50 hover:bg-emerald-600/50">
-                    <i class="fa-solid fa-shield-halved"></i> <span>2. Admin Midman</span>
-                    <span id="badge-admin-pending" class="hidden bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">0</span>
-                </button>
                 <button onclick="switchRole('kurir')" id="tab-kurir" class="role-btn flex-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-emerald-50 hover:bg-emerald-600/50">
-                    <i class="fa-solid fa-motorcycle"></i> <span>3. Pengirim / Kurir</span>
+                    <i class="fa-solid fa-motorcycle"></i> <span>2. Pengirim / Kurir</span>
                     <span id="badge-kurir-active" class="hidden bg-sky-300 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">0</span>
                 </button>
                 <button onclick="switchRole('umkm')" id="tab-umkm" class="role-btn flex-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-emerald-50 hover:bg-emerald-600/50">
-                    <i class="fa-solid fa-store"></i> <span>4. Mitra Toko UMKM</span>
+                    <i class="fa-solid fa-store"></i> <span>3. Mitra Toko UMKM</span>
                     <span id="badge-umkm-count" class="bg-amber-400 text-slate-950 text-[10px] font-extrabold px-1.5 py-0.2 rounded-full">2</span>
                 </button>
             </div>
@@ -276,7 +272,29 @@
                         </div>
 
                         <!-- Ringkasan Kalkulator Biaya -->
-                        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2 text-xs">
+                        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2.5 text-xs">
+                            <!-- Input Kode Promo Penitip -->
+                            <div class="pb-2.5 border-b border-slate-200/80 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                                        <i class="fa-solid fa-ticket text-amber-500"></i> Punya Kode Promo?
+                                    </label>
+                                    <div id="active-promo-chips" class="flex flex-wrap gap-1">
+                                        <!-- Chip promo aktif dari Admin dirender via JS -->
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="input-promo-code" placeholder="Masukkan kode promo (misal: JOMBANGHEMAT)" class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs uppercase font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    <button type="button" onclick="applyPromoCode()" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition">
+                                        Pakai
+                                    </button>
+                                </div>
+                                <div id="applied-promo-banner" class="hidden flex items-center justify-between bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1.5 rounded-xl text-[11px]">
+                                    <span id="applied-promo-text" class="font-bold">Promo aktif!</span>
+                                    <button type="button" onclick="removeAppliedPromo()" class="text-rose-600 font-bold hover:underline">Hapus</button>
+                                </div>
+                            </div>
+
                             <div class="flex justify-between text-slate-600">
                                 <span>Total Estimasi Harga Barang (<span id="calc-stop-count">1</span> titik):</span>
                                 <span id="calc-item-price" class="font-semibold text-slate-800">Rp 25.000</span>
@@ -291,7 +309,11 @@
                             </div>
                             <div class="flex justify-between text-slate-600">
                                 <span>Biaya Layanan Midman & Escrow:</span>
-                                <span class="font-semibold text-slate-800">Rp 3.000</span>
+                                <span id="calc-midman-fee" class="font-semibold text-slate-800">Rp 3.000</span>
+                            </div>
+                            <div id="calc-discount-row" class="hidden flex justify-between text-emerald-700 font-bold">
+                                <span id="calc-discount-label">Potongan Promo:</span>
+                                <span id="calc-discount-amount">-Rp 0</span>
                             </div>
                             <div class="pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-bold text-slate-900">
                                 <span>Total Pembayaran Midman:</span>
@@ -320,55 +342,7 @@
         </section>
 
         <!-- =================================================================== -->
-        <!-- VIEW 2: ADMIN MIDMAN (VERIFIKASI PEMBAYARAN & VIRTUAL LEDGER)       -->
-        <!-- =================================================================== -->
-        <section id="view-admin" class="hidden space-y-6 animate-fade-in">
-            <!-- Escrow Ledger Summary Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Menunggu Validasi</span>
-                        <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-clock"></i></span>
-                    </div>
-                    <p id="stat-pending-amount" class="text-2xl font-extrabold text-slate-900">Rp 0</p>
-                    <p class="text-xs text-slate-500 mt-1">Bukti bayar masuk perlu dicek</p>
-                </div>
-
-                <div class="bg-white rounded-3xl p-5 border border-emerald-200 shadow-sm ring-1 ring-emerald-500/10">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Dana Ditahan (HELD)</span>
-                        <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center"><i class="fa-solid fa-lock"></i></span>
-                    </div>
-                    <p id="stat-held-amount" class="text-2xl font-extrabold text-emerald-600">Rp 0</p>
-                    <p class="text-xs text-slate-500 mt-1">Aman di Rekening Penampung Midman</p>
-                </div>
-
-                <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-sky-700 uppercase tracking-wider">Siap Cair (RELEASED)</span>
-                        <span class="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center"><i class="fa-solid fa-circle-check"></i></span>
-                    </div>
-                    <p id="stat-released-amount" class="text-2xl font-extrabold text-sky-600">Rp 0</p>
-                    <p class="text-xs text-slate-500 mt-1">Terkonfirmasi diterima penitip</p>
-                </div>
-            </div>
-
-            <!-- Virtual Ledger Table / Cards -->
-            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <h3 class="font-bold text-lg text-slate-900">Buku Besar Virtual Midman (Escrow Ledger)</h3>
-                        <p class="text-xs text-slate-500">Validasi mutasi masuk & pantau bukti serah-terima ber-GPS sebelum pencairan dana.</p>
-                    </div>
-                </div>
-                <div id="admin-orders-list" class="divide-y divide-slate-100">
-                    <!-- Render via JS -->
-                </div>
-            </div>
-        </section>
-
-        <!-- =================================================================== -->
-        <!-- VIEW 3: PENGIRIM / KURIR (AMBIL ORDER & KAMERA TIMESTAMP GPS)       -->
+        <!-- VIEW 2: PENGIRIM / KURIR (AMBIL ORDER & KAMERA TIMESTAMP GPS)       -->
         <!-- =================================================================== -->
         <section id="view-kurir" class="hidden space-y-6 animate-fade-in">
             <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -397,6 +371,24 @@
         <!-- VIEW 4: MITRA TOKO UMKM (DAFTAR TOKO & TAMBAH PRODUK)               -->
         <!-- =================================================================== -->
         <section id="view-umkm" class="hidden space-y-6 animate-fade-in">
+            <!-- Bar Akun Google Mitra yang Sedang Login -->
+            <div id="umkm-google-account-bar" class="bg-white rounded-3xl p-4 sm:px-6 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <img id="umkm-user-avatar" src="https://placehold.co/80x80/10b981/ffffff?text=G" alt="Avatar" class="w-10 h-10 rounded-full border border-slate-200 object-cover">
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span id="umkm-user-name" class="text-xs font-extrabold text-slate-900">Mitra UMKM Jombang</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200"><i class="fa-brands fa-google mr-1"></i>Terhubung Google</span>
+                        </div>
+                        <p id="umkm-user-email" class="text-[11px] text-slate-500">mitra@gmail.com</p>
+                    </div>
+                </div>
+                <button type="button" onclick="logoutUmkmGoogle()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Keluar Akun Google</span>
+                </button>
+            </div>
+
             <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white rounded-3xl p-6 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-semibold mb-2">
@@ -538,7 +530,7 @@
     <!-- BOTTOM NAVIGATION BAR KHUSUS ANDROID / MOBILE (ALA GOFOOD / GRAB)      -->
     <!-- ===================================================================== -->
     <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 px-2 py-1.5 shadow-[0_-4px_16px_rgba(15,23,42,0.06)]">
-        <div class="grid grid-cols-4 gap-1">
+        <div class="grid grid-cols-3 gap-1">
             <button type="button" onclick="switchRole('penitip')" id="mob-tab-penitip" class="mob-role-btn flex flex-col items-center justify-center py-1 rounded-xl text-emerald-600 font-bold">
                 <i class="fa-solid fa-house text-base mb-0.5"></i>
                 <span class="text-[10px]">Beranda</span>
@@ -546,16 +538,11 @@
             <button type="button" onclick="switchRole('kurir')" id="mob-tab-kurir" class="mob-role-btn relative flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-semibold">
                 <i class="fa-solid fa-motorcycle text-base mb-0.5"></i>
                 <span class="text-[10px]">Kurir</span>
-                <span id="mob-badge-kurir" class="hidden absolute top-0.5 right-4 bg-sky-500 text-white text-[9px] font-extrabold px-1.5 rounded-full">0</span>
+                <span id="mob-badge-kurir" class="hidden absolute top-0.5 right-6 bg-sky-500 text-white text-[9px] font-extrabold px-1.5 rounded-full">0</span>
             </button>
             <button type="button" onclick="switchRole('umkm')" id="mob-tab-umkm" class="mob-role-btn flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-semibold">
                 <i class="fa-solid fa-store text-base mb-0.5"></i>
                 <span class="text-[10px]">Mitra Toko</span>
-            </button>
-            <button type="button" onclick="switchRole('admin')" id="mob-tab-admin" class="mob-role-btn relative flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-semibold">
-                <i class="fa-solid fa-shield-halved text-base mb-0.5"></i>
-                <span class="text-[10px]">Midman</span>
-                <span id="mob-badge-admin" class="hidden absolute top-0.5 right-4 bg-amber-500 text-slate-950 text-[9px] font-extrabold px-1.5 rounded-full">0</span>
             </button>
         </div>
     </nav>
@@ -695,42 +682,167 @@
     </div>
 
     <!-- ===================================================================== -->
-    <!-- JAVASCRIPT APPLICATION LOGIC                                          -->
+    <!-- MODAL 4: WAJIB LOGIN GOOGLE UNTUK MITRA TOKO UMKM                     -->
+    <!-- ===================================================================== -->
+    <div id="umkm-google-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-fade-in">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Verifikasi Mitra UMKM</span>
+                        <h3 class="font-extrabold text-base text-slate-900">Masuk dengan Akun Google</h3>
+                    </div>
+                </div>
+                <button type="button" onclick="closeUmkmGoogleModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Untuk menjaga keaslian toko dan keamanan transaksi warga Jombang, pemilik usaha <strong>wajib login menggunakan Akun Google</strong> sebelum mendaftarkan toko atau menambah produk.
+                </p>
+
+                <!-- Tombol Utama Masuk dengan Google -->
+                <button type="button" onclick="triggerGoogleSignInFlow()" class="w-full py-3 px-4 rounded-2xl bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-sky-400 text-slate-800 font-extrabold text-xs shadow-sm transition flex items-center justify-center gap-3">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/>
+                        <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/>
+                        <path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/>
+                        <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/>
+                    </svg>
+                    <span>Lanjutkan dengan Akun Google</span>
+                </button>
+
+                <!-- Opsi Pemilih Akun Google Cepat untuk Simulasi / Uji Coba -->
+                <div id="google-account-chooser" class="hidden pt-2 border-t border-slate-100 space-y-2 animate-fade-in">
+                    <p class="text-[11px] font-bold text-slate-500">Pilih Akun Google Anda:</p>
+                    <button type="button" onclick="completeGoogleLogin('Warung Seblak Jombang', 'seblak.jombang@gmail.com')" class="w-full p-2.5 rounded-xl border border-slate-200 hover:bg-sky-50/60 hover:border-sky-300 flex items-center gap-3 text-left transition">
+                        <div class="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">W</div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-slate-900 truncate">Warung Seblak Jombang</p>
+                            <p class="text-[11px] text-slate-500 truncate">seblak.jombang@gmail.com</p>
+                        </div>
+                    </button>
+                    <form onsubmit="submitCustomGoogleEmail(event)" class="flex gap-2 pt-1">
+                        <input type="email" id="custom-google-email" required placeholder="Atau ketik email @gmail.com Anda..." class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        <button type="submit" class="px-3 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition">Masuk</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT APPLICATION LOGIC (APLIKASI PENGGUNA PUBLIK)               -->
     <!-- ===================================================================== -->
     <script>
         // =====================================================================
-        // INISIALISASI PROGRESSIVE WEB APP (PWA MANIFEST & SERVICE WORKER)
+        // STATE & KONFIGURASI ZONA AREA KOTA JOMBANG
         // =====================================================================
+        let tariffConfig = {
+            FEE_MIDMAN: 3000,
+            EXTRA_STOP_SAME_ZONE: 3000, // Tambahan per titik jika masih 1 zona/area
+            EXTRA_STOP_DIFF_ZONE: 5000  // Tambahan per titik jika beda zona/area
+        };
+
+        const ZONES = {
+            ZONA_1: {
+                name: 'Zona 1 (0–4 km • Pusat Kota)',
+                areas: 'Alun-Alun, Kaliwungu, Jombatan, Jelakombo, Kepanjen, Sengon',
+                baseOngkir: 5000
+            },
+            ZONA_2: {
+                name: 'Zona 2 (4,1–8 km • Pinggir Kota)',
+                areas: 'Candimulyo, Sambongdukuh, Mojongapit, Plandi, Tunggorono, Denanyar',
+                baseOngkir: 8000
+            },
+            ZONA_3: {
+                name: 'Zona 3 (8,1–12 km • Perbatasan)',
+                areas: 'Tambakberas, Peterongan, Ceweng, Diwek, Jabon',
+                baseOngkir: 11000
+            }
+        };
+
+        // Daftar Promo / Voucher yang dikelola Admin
+        let promoList = [
+            {
+                id: 'PRM-1',
+                code: 'JOMBANGHEMAT',
+                discount: 3000,
+                desc: 'Diskon ongkir spesial warga Jombang',
+                active: true
+            },
+            {
+                id: 'PRM-2',
+                code: 'GRATISONGKIR',
+                discount: 5000,
+                desc: 'Potongan ongkir hingga Rp 5.000',
+                active: true
+            }
+        ];
+        let appliedPromo = null; // Menyimpan objek promo yang sedang dipakai penitip
         let deferredInstallPrompt = null;
 
-        function initPwaCapabilities() {
-            // 1. Buat ikon aplikasi SVG dinamis untuk Home Screen Android/iOS
-            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#10b981"/><path d="M160 192h192l20 208H140l20-208zm48-32a48 48 0 0 1 96 0v32h-96v-32z" fill="#ffffff"/></svg>`;
-            const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgIcon);
+        // =====================================================================
+        // STATE AUTENTIKASI MITRA TOKO UMKM (WAJIB LOGIN GOOGLE)
+        // =====================================================================
+        let umkmGoogleUser = null; // { name, email, avatar }
 
-            // 2. Suntikkan Web App Manifest dinamis agar browser mengenali sebagai Aplikasi Android
-            const manifestObj = {
-                name: 'Jastip Jombang — Midman & Escrow',
-                short_name: 'Jastip Jombang',
-                description: 'Jastip segala barang area dalam kota Jombang dengan sistem rekening bersama (Midman & Escrow).',
-                start_url: window.location.href,
-                display: 'standalone',
-                background_color: '#0f172a',
-                theme_color: '#10b981',
-                orientation: 'portrait',
-                icons: [
-                    { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
-                    { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-                ]
+        function openUmkmGoogleModal() {
+            document.getElementById('google-account-chooser').classList.add('hidden');
+            document.getElementById('umkm-google-modal').classList.remove('hidden');
+        }
+
+        function closeUmkmGoogleModal() {
+            document.getElementById('umkm-google-modal').classList.add('hidden');
+        }
+
+        function triggerGoogleSignInFlow() {
+            document.getElementById('google-account-chooser').classList.remove('hidden');
+        }
+
+        function submitCustomGoogleEmail(e) {
+            e.preventDefault();
+            const emailVal = document.getElementById('custom-google-email').value.trim();
+            if (!emailVal) return;
+            const displayName = emailVal.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            completeGoogleLogin(displayName, emailVal);
+        }
+
+        function completeGoogleLogin(name, email) {
+            const initial = (name || 'M').charAt(0).toUpperCase();
+            umkmGoogleUser = {
+                name,
+                email,
+                avatar: `https://placehold.co/80x80/0284c7/ffffff?text=${encodeURIComponent(initial)}`
             };
+            closeUmkmGoogleModal();
+            updateUmkmAccountHeader();
+            showToast(`Berhasil login Google sebagai ${name} (${email})!`, 'success');
+            switchRole('umkm');
+        }
 
-            const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
-            const manifestLink = document.createElement('link');
-            manifestLink.rel = 'manifest';
-            manifestLink.href = URL.createObjectURL(manifestBlob);
-            document.head.appendChild(manifestLink);
+        function logoutUmkmGoogle() {
+            umkmGoogleUser = null;
+            showToast('Anda telah keluar dari akun Google Mitra UMKM.', 'info');
+            switchRole('penitip');
+        }
 
-            // 3. Tangkap event instalasi native Android Chrome
+        function updateUmkmAccountHeader() {
+            if (!umkmGoogleUser) return;
+            const nameEl = document.getElementById('umkm-user-name');
+            const emailEl = document.getElementById('umkm-user-email');
+            const avatarEl = document.getElementById('umkm-user-avatar');
+            if (nameEl) nameEl.textContent = umkmGoogleUser.name;
+            if (emailEl) emailEl.textContent = umkmGoogleUser.email;
+            if (avatarEl) avatarEl.src = umkmGoogleUser.avatar;
+        }
+
+        function initPwaCapabilities() {
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredInstallPrompt = e;
@@ -761,30 +873,20 @@
             deferredInstallPrompt = null;
         }
 
-        // =====================================================================
-        // STATE & KONFIGURASI ZONA AREA KOTA JOMBANG
-        // =====================================================================
-        const FEE_MIDMAN = 3000;
-        const EXTRA_STOP_SAME_ZONE = 3000; // Tambahan per titik jika masih 1 zona/area
-        const EXTRA_STOP_DIFF_ZONE = 5000; // Tambahan per titik jika beda zona/area
+        function updateBadges() {
+            const kurirActiveCount = orders.filter(o => o.status !== 'MENUNGGU_BAYAR' && o.status !== 'MENUNGGU_VERIFIKASI_ADMIN' && o.status !== 'SELESAI').length;
 
-        const ZONES = {
-            ZONA_1: {
-                name: 'Zona 1 (0–4 km • Pusat Kota)',
-                areas: 'Alun-Alun, Kaliwungu, Jombatan, Jelakombo, Kepanjen, Sengon',
-                baseOngkir: 5000
-            },
-            ZONA_2: {
-                name: 'Zona 2 (4,1–8 km • Pinggir Kota)',
-                areas: 'Candimulyo, Sambongdukuh, Mojongapit, Plandi, Tunggorono, Denanyar',
-                baseOngkir: 8000
-            },
-            ZONA_3: {
-                name: 'Zona 3 (8,1–12 km • Perbatasan)',
-                areas: 'Tambakberas, Peterongan, Ceweng, Diwek, Jabon',
-                baseOngkir: 11000
+            const badgeKurir = document.getElementById('badge-kurir-active');
+            const mobBadgeKurir = document.getElementById('mob-badge-kurir');
+            if (badgeKurir) {
+                badgeKurir.textContent = kurirActiveCount;
+                badgeKurir.classList.toggle('hidden', kurirActiveCount === 0);
             }
-        };
+            if (mobBadgeKurir) {
+                mobBadgeKurir.textContent = kurirActiveCount;
+                mobBadgeKurir.classList.toggle('hidden', kurirActiveCount === 0);
+            }
+        }
 
         // Daftar titik belanja dinamis pada form pemesanan
         let stopRows = [
@@ -936,7 +1038,13 @@
         }
 
         function switchRole(role) {
-            ['penitip', 'admin', 'kurir', 'umkm'].forEach(r => {
+            // Proteksi Akses Portal Mitra Toko UMKM (Wajib Login Google)
+            if (role === 'umkm' && !umkmGoogleUser) {
+                openUmkmGoogleModal();
+                return;
+            }
+
+            ['penitip', 'kurir', 'umkm'].forEach(r => {
                 document.getElementById(`view-${r}`).classList.add('hidden');
 
                 // Desktop Top Tab
@@ -1036,7 +1144,7 @@
                 const isSameZone = stop.zone === primaryZone;
                 const badgeText = isFirst
                     ? 'Titik Utama (Included)'
-                    : (isSameZone ? `1 Area (+${formatRupiah(EXTRA_STOP_SAME_ZONE)})` : `Beda Area (+${formatRupiah(EXTRA_STOP_DIFF_ZONE)})`);
+                    : (isSameZone ? `1 Area (+${formatRupiah(tariffConfig.EXTRA_STOP_SAME_ZONE)})` : `Beda Area (+${formatRupiah(tariffConfig.EXTRA_STOP_DIFF_ZONE)})`);
                 const badgeClass = isFirst
                     ? 'bg-emerald-100 text-emerald-800'
                     : (isSameZone ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800');
@@ -1101,17 +1209,21 @@
                 totalItemPrice += (parseInt(stop.estPrice) || 0);
                 if (idx > 0) {
                     if (stop.zone === primaryPickupZone) {
-                        extraStopFee += EXTRA_STOP_SAME_ZONE;
+                        extraStopFee += tariffConfig.EXTRA_STOP_SAME_ZONE;
                         sameZoneCount++;
                     } else {
-                        extraStopFee += EXTRA_STOP_DIFF_ZONE;
+                        extraStopFee += tariffConfig.EXTRA_STOP_DIFF_ZONE;
                         diffZoneCount++;
                     }
                 }
             });
 
             const totalOngkir = baseOngkir + extraStopFee;
-            const grandTotal = totalItemPrice + totalOngkir + FEE_MIDMAN;
+            let discountAmount = 0;
+            if (appliedPromo && appliedPromo.active) {
+                discountAmount = Math.min(appliedPromo.discount, totalOngkir + tariffConfig.FEE_MIDMAN);
+            }
+            const grandTotal = Math.max(0, totalItemPrice + totalOngkir + tariffConfig.FEE_MIDMAN - discountAmount);
 
             return {
                 deliveryZone,
@@ -1121,6 +1233,7 @@
                 sameZoneCount,
                 diffZoneCount,
                 totalOngkir,
+                discountAmount,
                 grandTotal
             };
         }
@@ -1205,6 +1318,7 @@
             document.getElementById('calc-item-price').textContent = formatRupiah(calc.totalItemPrice);
             document.getElementById('calc-base-ongkir-label').textContent = `Ongkir Utama (${ZONES[calc.deliveryZone].name.split(' • ')[0]}):`;
             document.getElementById('calc-base-ongkir').textContent = formatRupiah(calc.baseOngkir);
+            document.getElementById('calc-midman-fee').textContent = formatRupiah(tariffConfig.FEE_MIDMAN);
 
             const extraRow = document.getElementById('calc-extra-stop-row');
             if (stopRows.length > 1) {
@@ -1213,6 +1327,15 @@
                 document.getElementById('calc-extra-stop-fee').textContent = '+' + formatRupiah(calc.extraStopFee);
             } else {
                 extraRow.classList.add('hidden');
+            }
+
+            const discountRow = document.getElementById('calc-discount-row');
+            if (calc.discountAmount > 0 && appliedPromo) {
+                discountRow.classList.remove('hidden');
+                document.getElementById('calc-discount-label').textContent = `Potongan Promo (${appliedPromo.code}):`;
+                document.getElementById('calc-discount-amount').textContent = '-' + formatRupiah(calc.discountAmount);
+            } else {
+                discountRow.classList.add('hidden');
             }
 
             document.getElementById('calc-total').textContent = formatRupiah(calc.grandTotal);
@@ -1299,6 +1422,10 @@
 
         function registerUmkmStore(e) {
             e.preventDefault();
+            if (!umkmGoogleUser) {
+                openUmkmGoogleModal();
+                return;
+            }
             const name = document.getElementById('umkm-store-name').value.trim();
             const category = document.getElementById('umkm-store-category').value;
             const zone = document.getElementById('umkm-store-zone').value;
@@ -1306,6 +1433,7 @@
 
             const newStore = {
                 id: 'UMKM-' + (umkmStores.length + 1) + '-' + Math.floor(Math.random() * 90 + 10),
+                ownerEmail: umkmGoogleUser.email,
                 name,
                 category,
                 zone,
@@ -1499,7 +1627,9 @@
                 baseOngkir: calc.baseOngkir,
                 extraStopFee: calc.extraStopFee,
                 ongkir: calc.totalOngkir,
-                fee: FEE_MIDMAN,
+                fee: tariffConfig.FEE_MIDMAN,
+                discount: calc.discountAmount,
+                promoCode: appliedPromo ? appliedPromo.code : null,
                 totalPrice: calc.grandTotal,
                 paymentMethod: paymentMethod,
                 status: paymentMethod === 'CASH_PICKUP' ? 'MENUNGGU_JEMPUT_TUNAI' : 'MENUNGGU_BAYAR',
@@ -1514,6 +1644,7 @@
 
             orders.unshift(newOrder);
             document.getElementById('order-form').reset();
+            removeAppliedPromo();
             clearCustomerGPS();
             stopRows = [{ id: 1, storeName: '', zone: 'ZONA_1', items: '', estPrice: 25000 }];
             nextStopId = 2;
@@ -1790,46 +1921,59 @@
 
         function renderAll() {
             updateBadges();
+            renderPromoChipsForPenitip();
             renderUmkmSection();
             renderPenitipOrders();
-            renderAdminOrders();
             renderKurirOrders();
         }
 
-        function updateBadges() {
-            const adminPendingCount = orders.filter(o => o.status === 'MENUNGGU_VERIFIKASI_ADMIN').length;
-            const badgeAdmin = document.getElementById('badge-admin-pending');
-            const mobBadgeAdmin = document.getElementById('mob-badge-admin');
-            if (adminPendingCount > 0) {
-                if (badgeAdmin) {
-                    badgeAdmin.textContent = adminPendingCount;
-                    badgeAdmin.classList.remove('hidden');
-                }
-                if (mobBadgeAdmin) {
-                    mobBadgeAdmin.textContent = adminPendingCount;
-                    mobBadgeAdmin.classList.remove('hidden');
-                }
-            } else {
-                if (badgeAdmin) badgeAdmin.classList.add('hidden');
-                if (mobBadgeAdmin) mobBadgeAdmin.classList.add('hidden');
+        // =====================================================================
+        // KODE PROMO & DISKON PENITIP
+        // =====================================================================
+        function applyPromoCode(codeOverride = null) {
+            const rawCode = (codeOverride || document.getElementById('input-promo-code').value || '').trim().toUpperCase();
+            if (!rawCode) {
+                showToast('Masukkan kode promo terlebih dahulu.', 'warning');
+                return;
             }
+            const found = promoList.find(p => p.code === rawCode && p.active);
+            if (!found) {
+                showToast(`Kode promo "${rawCode}" tidak valid atau sedang tidak aktif.`, 'warning');
+                return;
+            }
+            appliedPromo = found;
+            document.getElementById('input-promo-code').value = found.code;
+            updateAppliedPromoBanner();
+            recalculatePricing();
+            showToast(`Promo ${found.code} berhasil dipakai! Hemat ${formatRupiah(found.discount)}.`, 'success');
+        }
 
-            const kurirActiveCount = orders.filter(o => ['MENUNGGU_JEMPUT_TUNAI', 'DANA_DITAHAN_SIAP_BELANJA', 'SEDANG_DIANTAR'].includes(o.status)).length;
-            const badgeKurir = document.getElementById('badge-kurir-active');
-            const mobBadgeKurir = document.getElementById('mob-badge-kurir');
-            if (kurirActiveCount > 0) {
-                if (badgeKurir) {
-                    badgeKurir.textContent = kurirActiveCount;
-                    badgeKurir.classList.remove('hidden');
-                }
-                if (mobBadgeKurir) {
-                    mobBadgeKurir.textContent = kurirActiveCount;
-                    mobBadgeKurir.classList.remove('hidden');
-                }
-            } else {
-                if (badgeKurir) badgeKurir.classList.add('hidden');
-                if (mobBadgeKurir) mobBadgeKurir.classList.add('hidden');
-            }
+        function removeAppliedPromo() {
+            appliedPromo = null;
+            const inputEl = document.getElementById('input-promo-code');
+            const bannerEl = document.getElementById('applied-promo-banner');
+            if (inputEl) inputEl.value = '';
+            if (bannerEl) bannerEl.classList.add('hidden');
+            recalculatePricing();
+        }
+
+        function updateAppliedPromoBanner() {
+            const bannerEl = document.getElementById('applied-promo-banner');
+            const textEl = document.getElementById('applied-promo-text');
+            if (!bannerEl || !textEl || !appliedPromo) return;
+            bannerEl.classList.remove('hidden');
+            textEl.textContent = `Voucher ${appliedPromo.code} aktif (-${formatRupiah(appliedPromo.discount)})`;
+        }
+
+        function renderPromoChipsForPenitip() {
+            const chipsEl = document.getElementById('active-promo-chips');
+            if (!chipsEl) return;
+            const activePromos = promoList.filter(p => p.active);
+            chipsEl.innerHTML = activePromos.map(p => `
+                <button type="button" onclick="applyPromoCode('${p.code}')" class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 transition">
+                    ${p.code} (-${formatRupiah(p.discount)})
+                </button>
+            `).join('');
         }
 
         function renderPenitipOrders() {
@@ -1860,7 +2004,7 @@
                             <strong class="text-slate-900 ml-1">${formatRupiah(order.totalPrice)}</strong>
                         </div>
                         <span class="font-semibold px-2 py-0.5 rounded-lg ${order.escrowStatus === 'HELD' ? 'bg-emerald-50 text-emerald-700' : order.escrowStatus === 'RELEASED' ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-600'}">
-                            Escrow: ${order.escrowStatus}
+                            Status Dana: ${order.escrowStatus === 'HELD' ? 'DITAHAN AMAN' : order.escrowStatus === 'RELEASED' ? 'CAIR' : 'MENUNGGU'}
                         </span>
                     </div>
 
@@ -1886,60 +2030,6 @@
                             <span>Konfirmasi Barang Diterima & Cairkan Dana</span>
                         </button>
                     ` : ''}
-                </div>
-            `).join('');
-        }
-
-        function renderAdminOrders() {
-            let pendingTotal = 0, heldTotal = 0, releasedTotal = 0;
-            orders.forEach(o => {
-                if (o.status === 'MENUNGGU_VERIFIKASI_ADMIN') pendingTotal += o.totalPrice;
-                if (o.escrowStatus === 'HELD') heldTotal += o.totalPrice;
-                if (o.escrowStatus === 'RELEASED') releasedTotal += o.totalPrice;
-            });
-
-            document.getElementById('stat-pending-amount').textContent = formatRupiah(pendingTotal);
-            document.getElementById('stat-held-amount').textContent = formatRupiah(heldTotal);
-            document.getElementById('stat-released-amount').textContent = formatRupiah(releasedTotal);
-
-            const container = document.getElementById('admin-orders-list');
-            container.innerHTML = orders.map(order => `
-                <div class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/70 transition">
-                    <div class="space-y-1.5 flex-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="font-extrabold text-sm text-slate-900">#${order.id}</span>
-                            <span class="text-xs font-semibold text-slate-700">${order.customerName} (${order.wa})</span>
-                            ${getStatusBadge(order.status)}
-                        </div>
-                        <p class="text-xs text-slate-600">
-                            <strong>${order.stops.length} Titik Belanja:</strong> ${order.stops.map(s => `${s.storeName} (${s.items})`).join(' + ')}
-                        </p>
-                        <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
-                            <span>Metode: <strong class="text-slate-700">${order.paymentMethod}</strong></span>
-                            <span>Ongkir: <strong class="text-slate-700">${formatRupiah(order.ongkir)}</strong></span>
-                            <span>Total Dana: <strong class="text-emerald-600">${formatRupiah(order.totalPrice)}</strong></span>
-                            ${order.paymentProofNote ? `<span class="text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md"><i class="fa-solid fa-receipt mr-1"></i>${order.paymentProofNote}</span>` : ''}
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2 shrink-0">
-                        ${order.status === 'MENUNGGU_VERIFIKASI_ADMIN' ? `
-                            <button onclick="adminApprovePayment('${order.id}')" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-lock"></i>
-                                <span>Validasi Dana Masuk (Kunci HELD)</span>
-                            </button>
-                        ` : order.escrowStatus === 'HELD' ? `
-                            <span class="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
-                                <i class="fa-solid fa-shield-halved mr-1"></i> Dana Terkunci Aman
-                            </span>
-                        ` : order.escrowStatus === 'RELEASED' ? `
-                            <span class="px-3 py-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-xs font-bold">
-                                <i class="fa-solid fa-check-double mr-1"></i> Pencairan Selesai
-                            </span>
-                        ` : `
-                            <span class="text-xs text-slate-400 italic">Menunggu pembayaran penitip</span>
-                        `}
-                    </div>
                 </div>
             `).join('');
         }
